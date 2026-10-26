@@ -32,7 +32,8 @@ struct FullBleedMap: UIViewRepresentable {
     func updateUIView(_ map: MKMapView, context: Context) {
         let coordinator = context.coordinator
         coordinator.parent = self
-        map.layoutMargins = UIEdgeInsets(top: 12, left: 12, bottom: footerInset + 12, right: 12)
+        // Leave room above the floating search/location controls for MapKit attribution.
+        map.layoutMargins = UIEdgeInsets(top: 12, left: 12, bottom: footerInset + 72, right: 12)
         map.showsUserLocation = showUserLocation
         if let requestedRegion, !Coordinator.same(requestedRegion, coordinator.lastRegion) {
             coordinator.lastRegion = requestedRegion
