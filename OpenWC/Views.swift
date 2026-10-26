@@ -128,6 +128,10 @@ struct HomeView: View {
                 Label("\(filtered.count) shared places", systemImage: "mappin.and.ellipse").font(.caption.bold()).padding(11).background(.regularMaterial, in: Capsule())
                 Button { accessibleOnly.toggle() } label: { Label("Step-free", systemImage: "figure.roll").font(.caption.bold()).padding(11).background(accessibleOnly ? violet.opacity(0.65) : Color.clear, in: Capsule()).background(.regularMaterial, in: Capsule()) }
             }
+            if savedOnly || recheckOnly {
+                Button("Clear Saved / Needs recheck filters") { savedOnly = false; recheckOnly = false }
+                    .font(.caption).padding(10).background(.regularMaterial, in: Capsule())
+            }
             if location.denied && !store.demo { Text("Location is off. Enable it in Settings to find the nearest places.").font(.caption).padding(10).background(.regularMaterial, in: Capsule()) }
         }.padding(20).background(LinearGradient(colors: [Color(uiColor: .systemBackground).opacity(0.95), .clear], startPoint: .top, endPoint: .bottom))
     }

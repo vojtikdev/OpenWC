@@ -27,12 +27,16 @@ struct CheckSummary: Decodable {
     let last_checked: String?
     let last_report: String?
     var total: Int { working_count + broken_count }
-    var needsRecheck: Bool { broken_count > 0 || last_report != nil }
+    var needsRecheck: Bool {
+        if working_count >= 2 && working_count > broken_count { return false }
+        return broken_count > 0 || last_report != nil
+    }
     var title: String {
         if total == 0 { return last_report == nil ? "Not checked yet" : "Needs a recheck" }
+        if working_count >= 2 && working_count > broken_count { return "Reported working" }
         if broken_count > working_count { return "Reported issues" }
         if broken_count > 0 { return "Mixed reports" }
-        return "Reported working"
+        return needsRecheck ? "Needs a recheck" : "Reported working"
     }
     var color: Color { needsRecheck ? .orange : total > 0 ? .green : .secondary }
 }

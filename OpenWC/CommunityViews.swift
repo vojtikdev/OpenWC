@@ -9,7 +9,7 @@ struct CommunityStatusView: View {
     private var summary: CheckSummary? { store.summaries[place.id] }
     private var own: CodeCheck? { store.checks.first { $0.place_id == place.id } }
     private var shouldPrompt: Bool {
-        guard let reportDate = CommunityDate.parse(summary?.last_report) else { return false }
+        guard summary?.needsRecheck == true, let reportDate = CommunityDate.parse(summary?.last_report) else { return false }
         return CommunityDate.parse(own?.observed_at).map { $0 < reportDate } ?? true
     }
     var body: some View {
@@ -39,7 +39,7 @@ struct CommunityStatusView: View {
             if own != nil { Text("Your latest answer is saved. Answer again if the code changes.").font(.caption).foregroundStyle(.secondary) }
             if let feedback { Text(feedback).font(.caption).foregroundStyle(.secondary) }
             if let error = store.communityError { Text(error).font(.caption).foregroundStyle(.orange) }
-            Text(store.demo ? "Demo codes are fictional; voting is disabled." : "Counts cover the last 30 days. One current check per account and place. Community feedback is not a guarantee of access.")
+            Text(store.demo ? "Demo codes are fictional; voting is disabled." : "Counts cover the last 30 days. One current check per account/place. Two working checks with a working majority clear the recheck flag. Community feedback does not guarantee access.")
                 .font(.caption2).foregroundStyle(.secondary)
         }.padding(20).background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 24))
     }

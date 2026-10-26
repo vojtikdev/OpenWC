@@ -36,6 +36,6 @@ struct BusinessBadge: View {
                     .foregroundStyle(violet).frame(width: size, height: size)
                     .background(violet.opacity(0.13), in: RoundedRectangle(cornerRadius: size * 0.29))
             }
-        }.accessibilityLabel(name)
+        }.accessibilityHidden(true)
     }
 }
