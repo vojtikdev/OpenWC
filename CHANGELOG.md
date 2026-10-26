@@ -15,3 +15,12 @@ Legal pages remain development drafts pending a public contact, finalized operat
 
 - Added the operator’s supplied public email, GitHub and Discord contact details to legal documents and in-app requests.
 - Published the source and commit history, verified the first macOS simulator build, and retained its resolved dependency lockfile.
+
+## 2026-10-26 — Smarter discovery and community checks
+
+- Automatic nearest-business suggestions for map pins and distance-ranked business search, with manual override.
+- Debounced searches and stale-response cancellation; business monogram badges on maps, results and cards.
+- Separate navigation footer, visible nearby search and bottom-safe scrolling in Settings, Profile and pushed pages.
+- Editable private profiles; saved places; personal contribution overview and check chart; useful nearby filters.
+- Working/broken community checks, recheck prompts, 30-day counts and server-controlled vote timestamps.
+- Added owner-only profiles/favorites/check records and authenticated anonymous-voter aggregate summaries; verified ownership, isolation, repeat-vote behavior and timestamp protections in a rolled-back database test.

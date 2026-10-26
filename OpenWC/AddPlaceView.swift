@@ -8,7 +8,9 @@ struct AddPlaceView: View {
     @Environment(\.dismiss) var dismiss
     let regionCenter: CLLocationCoordinate2D?
     @State private var query = ""
-    @State private var results: [MKMapItem] = []
+    @StateObject private var finder = BusinessFinder()
+    @State private var searchAnchor: CLLocationCoordinate2D?
+    @State private var selectionNote: String?
     @State private var coordinate: CLLocationCoordinate2D?
     @State private var businessName = ""
     @State private var address = ""
@@ -19,9 +21,8 @@ struct AddPlaceView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var photo: Data?
     @State private var working = false
-    @State private var searching = false
     @State private var error: String?
-    var valid: Bool { coordinate != nil && !businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && businessName.count <= 200 && address.count <= 1000 && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && code.count <= 32 && notes.count <= 1000 }
+    var valid: Bool { !finder.searching && coordinate != nil && !businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && businessName.count <= 200 && address.count <= 1000 && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && code.count <= 32 && notes.count <= 1000 }
     var body: some View {
         NavigationStack {
             Form {
@@ -33,11 +34,15 @@ struct AddPlaceView: View {
                 Section("1 · Pin the business") {
                     HStack {
                         TextField("Business name or address", text: $query).onSubmit { Task { await search() } }
-                        Button { Task { await search() } } label: { if searching { ProgressView() } else { Image(systemName: "magnifyingglass") } }.disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || searching).accessibilityLabel("Search businesses")
+                        Button { Task { await search() } } label: { if finder.searching { ProgressView() } else { Image(systemName: "magnifyingglass") } }.disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || finder.searching).accessibilityLabel("Search businesses")
                     }
                     Button { choosingPin = true } label: {
                         Label(coordinate == nil ? "Choose a spot on the map" : "Adjust the map pin", systemImage: "mappin.and.ellipse")
                     }
+                    Text("Results are sorted by distance from your pin or current search area. The nearest match is selected automatically.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let selectionNote { Text(selectionNote).font(.caption).foregroundStyle(.purple) }
+                    if let searchError = finder.error { Text(searchError).font(.caption).foregroundStyle(.secondary) }
                     TextField("Business or place name", text: $businessName)
                     TextField("Street / address (optional)", text: $address)
                     if let coordinate {
@@ -50,14 +55,17 @@ struct AddPlaceView: View {
                         Text(String(format: "%.6f, %.6f", coordinate.latitude, coordinate.longitude))
                             .font(.caption.monospaced()).foregroundStyle(.secondary)
                     }
-                    ForEach(Array(results.enumerated()), id: \.offset) { _, item in
-                        Button {
-                            coordinate = item.placemark.coordinate
-                            businessName = item.name ?? ""
-                            address = item.placemark.title ?? ""
-                            results = []
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) { Text(item.name ?? "Business"); Text(item.placemark.title ?? "").font(.caption).foregroundStyle(.secondary) }
+                    ForEach(Array(finder.results.enumerated()), id: \.offset) { _, item in
+                        Button { choose(item, note: "Selected business. Adjust its pin if needed.")                        } label: {
+                            HStack {
+                                BusinessBadge(name: item.name ?? "", size: 36)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(item.name ?? "Business")
+                                    Text(item.placemark.title ?? "").font(.caption).foregroundStyle(.secondary)
+                                    if let searchAnchor { Text("\(Int(BusinessFinder.distance(item, from: searchAnchor))) m from search area").font(.caption2).foregroundStyle(.secondary) }
+                                }
+                            }
+
                         }
                     }
                 }
@@ -80,10 +88,19 @@ struct AddPlaceView: View {
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(working) } }
                 .interactiveDismissDisabled(working)
                 .sheet(isPresented: $choosingPin) {
-                    MapPinPicker(initialCoordinate: coordinate ?? regionCenter) { value in
+                    MapPinPicker(initialCoordinate: coordinate ?? regionCenter) { value, item in
                         coordinate = value
+                        if let item { choose(item, note: "Nearest business to your pin selected.") }
+                        else { selectionNote = "Exact pin kept. Check the business name and address." }
                     }
                 }
+                .task(id: query) {
+                    do { try await Task.sleep(for: .milliseconds(550)); try Task.checkCancellation() }
+                    catch { return }
+                    if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 { await search() }
+                    else { finder.cancel(); finder.results = [] }
+                }
+                .onDisappear { finder.cancel() }
                 .onChange(of: photoItem) { _, item in
                     Task {
                         do {
@@ -100,17 +117,19 @@ struct AddPlaceView: View {
                 }
         }
     }
+    func choose(_ item: MKMapItem, note: String) {
+        coordinate = item.placemark.coordinate
+        businessName = item.name ?? ""
+        address = item.placemark.title ?? ""
+        selectionNote = note
+    }
     func search() async {
-        searching = true; error = nil
-        defer { searching = false }
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-        request.resultTypes = [.pointOfInterest, .address]
-        if let regionCenter { request.region = .init(center: regionCenter, span: .init(latitudeDelta: 0.08, longitudeDelta: 0.08)) }
-        do {
-            results = try await MKLocalSearch(request: request).start().mapItems
-            if results.isEmpty { error = "No businesses found. Try a name and city." }
-        } catch { self.error = error.localizedDescription }
+        error = nil
+        let anchor = coordinate ?? regionCenter ?? CLLocationCoordinate2D(latitude: 50.082, longitude: 14.424)
+        searchAnchor = anchor
+        await finder.search(query, near: anchor)
+        guard !Task.isCancelled else { return }
+        if let item = finder.results.first { choose(item, note: "Nearest search result selected. You can choose another below.") }
     }
     func save() async {
         guard let coordinate, valid else { return }

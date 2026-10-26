@@ -41,6 +41,24 @@ pcl=add('projectconfigs',{'isa':'XCConfigurationList','buildConfigurations':proj
 tcl=add('targetconfigs',{'isa':'XCConfigurationList','buildConfigurations':targetconfigs,'defaultConfigurationIsVisible':'0','defaultConfigurationName':'Release'})
 target=add('target',{'isa':'PBXNativeTarget','buildConfigurationList':tcl,'buildPhases':[sourcephase,frameworkphase,resourcephase],'buildRules':[],'dependencies':[],'name':'OpenWC','packageProductDependencies':[dep],'productName':'OpenWC','productReference':product,'productType':'com.apple.product-type.application'})
 project=add('project',{'isa':'PBXProject','attributes':{'BuildIndependentTargetsInParallel':'YES','LastUpgradeCheck':'2600'},'buildConfigurationList':pcl,'compatibilityVersion':'Xcode 14.0','developmentRegion':'en','hasScannedForEncodings':'0','knownRegions':['en','Base'],'mainGroup':main,'productRefGroup':productgroup,'projectDirPath':'','projectRoot':'','packageReferences':[package],'targets':[target]})
+# A real iPhone UI test target exercises footer clearance, nearby search and manual pins.
+testfile=add('uitestfile',{'isa':'PBXFileReference','lastKnownFileType':'sourcecode.swift','path':'OpenWCUITests.swift','sourceTree':'<group>'})
+testgroup=add('uitestgroup',{'isa':'PBXGroup','children':[testfile],'path':'OpenWCUITests','sourceTree':'<group>'})
+objects[main]['children'].append(testgroup)
+testbuild=add('uitestbuild',{'isa':'PBXBuildFile','fileRef':testfile})
+testphase=add('uitestphase',{'isa':'PBXSourcesBuildPhase','buildActionMask':'2147483647','files':[testbuild],'runOnlyForDeploymentPostprocessing':'0'})
+testproduct=add('uitestproduct',{'isa':'PBXFileReference','explicitFileType':'wrapper.cfbundle','path':'OpenWCUITests.xctest','sourceTree':'BUILT_PRODUCTS_DIR','includeInIndex':'0'})
+objects[productgroup]['children'].append(testproduct)
+testconfigs=[]
+for mode in ['Debug','Release']:
+    testconfigs.append(add('uitestconfig'+mode,{'isa':'XCBuildConfiguration','name':mode,'buildSettings':{'PRODUCT_BUNDLE_IDENTIFIER':'app.openwc.uitests','PRODUCT_NAME':'$(TARGET_NAME)','GENERATE_INFOPLIST_FILE':'YES','TEST_TARGET_NAME':'OpenWC','CODE_SIGN_STYLE':'Automatic','TARGETED_DEVICE_FAMILY':'1'}}))
+testconfiglist=add('uitestconfigs',{'isa':'XCConfigurationList','buildConfigurations':testconfigs,'defaultConfigurationIsVisible':'0','defaultConfigurationName':'Release'})
+proxy=add('uitestproxy',{'isa':'PBXContainerItemProxy','containerPortal':project,'proxyType':'1','remoteGlobalIDString':target,'remoteInfo':'OpenWC'})
+dependency=add('uitestdependency',{'isa':'PBXTargetDependency','target':target,'targetProxy':proxy})
+testtarget=add('uitesttarget',{'isa':'PBXNativeTarget','name':'OpenWCUITests','productName':'OpenWCUITests','productReference':testproduct,'productType':'com.apple.product-type.bundle.ui-testing','buildConfigurationList':testconfiglist,'buildPhases':[testphase],'buildRules':[],'dependencies':[dependency]})
+objects[project]['targets'].append(testtarget)
+objects[project]['attributes']['TargetAttributes']={testtarget:{'TestTargetID':target}}
+
 def serialize(v, depth=0):
     if isinstance(v,dict): return '{\n'+''.join('\t'*(depth+1)+json.dumps(k)+' = '+serialize(x,depth+1)+';\n' for k,x in v.items())+'\t'*depth+'}'
     if isinstance(v,list): return '(\n'+''.join('\t'*(depth+1)+serialize(x,depth+1)+',\n' for x in v)+'\t'*depth+')'
@@ -51,6 +69,7 @@ scheme=p/'xcshareddata/xcschemes';scheme.mkdir(parents=True,exist_ok=True)
 (scheme/'OpenWC.xcscheme').write_text(f'''<?xml version="1.0" encoding="UTF-8"?>
 <Scheme LastUpgradeVersion="2600" version="1.3">
 <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries><BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{target}" BuildableName="OpenWC.app" BlueprintName="OpenWC" ReferencedContainer="container:OpenWC.xcodeproj"/></BuildActionEntry></BuildActionEntries></BuildAction>
+<TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"><Testables><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{testtarget}" BuildableName="OpenWCUITests.xctest" BlueprintName="OpenWCUITests" ReferencedContainer="container:OpenWC.xcodeproj"/></TestableReference></Testables></TestAction>
 <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" allowLocationSimulation="YES"><BuildableProductRunnable runnableDebuggingMode="0"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{target}" BuildableName="OpenWC.app" BlueprintName="OpenWC" ReferencedContainer="container:OpenWC.xcodeproj"/></BuildableProductRunnable></LaunchAction>
 <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{target}" BuildableName="OpenWC.app" BlueprintName="OpenWC" ReferencedContainer="container:OpenWC.xcodeproj"/></BuildableProductRunnable></ProfileAction>
 <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>

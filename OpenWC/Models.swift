@@ -26,7 +26,7 @@ struct Place: Identifiable, Codable, Hashable {
 }
 
 @MainActor
-final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class LocationService: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     @Published var location: CLLocation?
     @Published var denied = false
     private let manager = CLLocationManager()

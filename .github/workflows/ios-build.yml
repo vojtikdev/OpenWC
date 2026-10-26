@@ -33,16 +33,25 @@ jobs:
                       sys.exit(0)
           raise SystemExit('No iPhone simulator installed on this runner')
           PY
-      - name: Build for iPhone Simulator
+      - name: Build and test on iPhone Simulator
         run: >-
           xcodebuild -project OpenWC.xcodeproj -scheme OpenWC
           -configuration Debug
           -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}'
-          -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          -derivedDataPath build -resultBundlePath build/TestResults.xcresult
+          CODE_SIGNING_ALLOWED=NO test
       - name: Retain resolved dependency versions
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: resolved-swift-packages
           path: OpenWC.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          if-no-files-found: ignore
+
+      - name: Retain UI test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: build/TestResults.xcresult
           if-no-files-found: ignore

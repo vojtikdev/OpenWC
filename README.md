@@ -33,9 +33,11 @@ This working copy contains the existing OpenWC project's URL and public publisha
 
 The connected project is `vpqezabichkjiwllczsg`, in EU Frankfurt. **Both SQL files have already been applied there. Do not rerun them against that project.** Existing contributions are preserved.
 
+The community update also applies `Database/community_features.sql`, adding private profiles, saved places, current code checks and an authenticated aggregate-summary RPC. It has already been applied to the connected project. Raw voter identities stay private; only counts and recent check/report times are shared.
+
 For your own empty Supabase project:
 
-1. Apply `Database/schema.sql`, then `Database/account_requests.sql`.
+1. Apply `Database/schema.sql`, then `Database/account_requests.sql`, then `Database/community_features.sql`.
 2. Put its URL and publishable key in `Config.xcconfig`.
 3. Configure authentication/email confirmation and production SMTP.
 4. Review the RLS/storage policies and operational settings.
@@ -105,3 +107,14 @@ The Figma file could not be accessed during implementation; the design follows t
 ## Contact
 
 Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues.
+
+## Community and discovery update
+
+- Pin placement suggests the nearest Apple Maps business within 500 m. Search selects the nearest returned match to the pin/current search area and offers alternatives. Map coverage is provider dependent; it cannot guarantee every business is returned. Keep-exact-pin mode remains available.
+- Search requests are debounced and older responses are ignored. Street/square queries can anchor a nearby-business lookup. Names/addresses remain editable before publishing.
+- The bottom navigation now occupies a separate VStack footer instead of overlaying any page or pushed Settings content. Lists/forms retain bottom scroll space.
+- Original business monogram badges cover McDonald’s, Five Guys, Burger King, KFC, Bouda Burgers, Subway, Bageterie Boulevard and Starbucks; other venues use a storefront icon.
+- Edit your private display name, bio, avatar and accent from Profile. The overview shows loaded contributions, saved places, current code checks and a seven-day snapshot. It does not collect visit/location history.
+- Save places for later and filter Nearby by Saved, Step-free or Needs recheck.
+- A reported code prompts other visitors on its detail page to confirm working/broken status. One current vote per account/place, server timestamps, and 30-day aggregates prevent repeated votes from inflating counts. Votes are community assertions, not proof that someone visited a venue.
+- Profile, favorites and raw vote RLS are owner-only. The summary function has a narrow authenticated interface in a private schema, a fixed search path, no dynamic SQL and a 1000-place request bound. Clients cannot assign check timestamps or alter another member’s profile/vote.

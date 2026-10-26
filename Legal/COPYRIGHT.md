@@ -12,7 +12,7 @@ The app uses the Supabase Swift SDK and its dependencies. Their licenses and not
 
 SwiftUI, MapKit, Apple Maps, system symbols and Apple platform services are supplied by Apple under the applicable Apple terms. Preserve map attribution and any required notices. Apple, iPhone and other third-party names belong to their respective owners.
 
-Restaurant and business names identify locations only. OpenWC does not claim affiliation, endorsement or permission from a business merely because it appears in a map listing or fictional demo. Demo codes are fictional.
+Business badges are original text monograms used to identify venues, not official brand logos. Restaurant and business names identify locations only. OpenWC does not claim affiliation, endorsement or permission from a business merely because it appears in a map listing or fictional demo. Demo codes are fictional.
 
 ## Copyright concerns
 

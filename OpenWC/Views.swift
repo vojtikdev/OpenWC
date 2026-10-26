@@ -22,7 +22,7 @@ struct WelcomeView: View {
         ZStack {
             Map(initialPosition: .region(.init(center: .init(latitude: 50.082, longitude: 14.424), span: .init(latitudeDelta: 0.018, longitudeDelta: 0.018)))) {
                 ForEach(Place.samples) { place in
-                    Annotation(place.name, coordinate: place.coordinate) { Pin() }
+                    Annotation(place.name, coordinate: place.coordinate) { Pin(name: place.name) }
                 }
             }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
                 .allowsHitTesting(false).ignoresSafeArea()
@@ -60,24 +60,27 @@ struct HomeView: View {
     @State private var selected: Place?
     @State private var search = ""
     @State private var accessibleOnly = false
+    @State private var savedOnly = false
+    @State private var recheckOnly = false
     @State private var position: MapCameraPosition = .region(.init(center: .init(latitude: 50.082, longitude: 14.424), span: .init(latitudeDelta: 0.015, longitudeDelta: 0.015)))
     var filtered: [Place] {
-        let items = store.places.filter { (!accessibleOnly || $0.accessible) && (search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || $0.address.localizedCaseInsensitiveContains(search)) }
+        let items = store.places.filter { (!accessibleOnly || $0.accessible) && (!savedOnly || store.savedIDs.contains($0.id)) && (!recheckOnly || store.summaries[$0.id]?.needsRecheck == true) && (search.isEmpty || $0.name.localizedStandardContains(search) || $0.address.localizedStandardContains(search)) }
         guard let current = origin else { return items }
         return items.filter { $0.distance(from: current) <= 5000 }.sorted { $0.distance(from: current) < $1.distance(from: current) }
     }
     var origin: CLLocation? { store.demo ? CLLocation(latitude: 50.082, longitude: 14.424) : location.location }
     var body: some View {
-        ZStack(alignment: .bottom) {
+        VStack(spacing: 0) {
+          ZStack(alignment: .bottom) {
             if tab == 0 {
                 Map(position: $position) {
                     UserAnnotation()
                     ForEach(filtered) { place in
                         Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
-                            Button { selected = place } label: { Pin() }.buttonStyle(.plain).accessibilityLabel("View \(place.name)")
+                            Button { selected = place } label: { Pin(name: place.name) }.buttonStyle(.plain).accessibilityLabel("View \(place.name)")
                         }
                     }
-                }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll)).ignoresSafeArea()
+                }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll)).ignoresSafeArea(.container, edges: .top)
                     .overlay(alignment: .top) { mapHeader }
                     .overlay(alignment: .bottomTrailing) {
                         Button { location.request(); if let origin { center(origin.coordinate) } } label: { Image(systemName: "location.fill").padding(16).background(.regularMaterial, in: Circle()) }
@@ -94,8 +97,12 @@ struct HomeView: View {
             } else if tab == 1 { listPage }
             else if tab == 3 { profilePage }
             else { SettingsView(location: location) }
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .clipped()
+          navigation
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { navigation }
+        .background(Color(uiColor: .systemBackground))
         .alert("OpenWC", isPresented: Binding(get: { store.message != nil && selected == nil && !adding }, set: { if !$0 { store.message = nil } })) {
             Button("OK") { store.message = nil }
         } message: { Text(store.message ?? "") }
@@ -128,13 +135,13 @@ struct HomeView: View {
         HStack(spacing: 0) {
             navItem("Map", "map", 0)
             navItem("Nearby", "list.bullet", 1)
-            Button { adding = true } label: { Image(systemName: "plus").font(.system(size: 27, weight: .medium)).foregroundStyle(.black).frame(width: 60, height: 60).background(LinearGradient(colors: [Color(red: 0.82, green: 0.71, blue: 1), violet], startPoint: .topLeading, endPoint: .bottomTrailing), in: Circle()).shadow(color: violet.opacity(0.4), radius: 15, y: 5) }.accessibilityLabel("Share a toilet code").frame(maxWidth: .infinity)
+            Button { adding = true } label: { Image(systemName: "plus").font(.system(size: 27, weight: .medium)).foregroundStyle(.black).frame(width: 60, height: 60).background(LinearGradient(colors: [Color(red: 0.82, green: 0.71, blue: 1), violet], startPoint: .topLeading, endPoint: .bottomTrailing), in: Circle()).shadow(color: violet.opacity(0.4), radius: 15, y: 5) }.accessibilityLabel("Share a toilet code").accessibilityIdentifier("sharePlaceButton").frame(maxWidth: .infinity)
             navItem("Profile", "person.crop.circle", 3)
             navItem("Settings", "slider.horizontal.3", 4)
         }.padding(9).modifier(NavigationGlass()).shadow(color: .black.opacity(0.18), radius: 24, y: 10).padding(.horizontal, 18).padding(.bottom, 16)
     }
     func navItem(_ name: String, _ symbol: String, _ value: Int) -> some View {
-        Button { tab = value } label: { VStack(spacing: 5) { Image(systemName: symbol).font(.system(size: 21)); Text(name).font(.system(size: 9, weight: .medium)) }.foregroundStyle(tab == value ? violet : .secondary).frame(maxWidth: .infinity).frame(height: 60) }
+        Button { tab = value } label: { VStack(spacing: 5) { Image(systemName: symbol).font(.system(size: 21)); Text(name).font(.system(size: 9, weight: .medium)) }.foregroundStyle(tab == value ? violet : .secondary).frame(maxWidth: .infinity).frame(height: 60) }.accessibilityIdentifier("tab-\(value)")
     }
     var listPage: some View {
         NavigationStack {
@@ -146,6 +153,7 @@ struct HomeView: View {
             }
             .navigationTitle("A little closer.")
             .safeAreaInset(edge: .top, spacing: 0) {
+              VStack(spacing: 8) {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass").foregroundStyle(violet)
                     TextField("Search nearby places", text: $search)
@@ -158,50 +166,56 @@ struct HomeView: View {
                 }
                 .padding(15).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
                 .padding(.horizontal, 20).padding(.vertical, 10)
-                .background(Color(uiColor: .systemBackground))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        filterChip("Saved", symbol: "bookmark", selected: $savedOnly)
+                        filterChip("Step-free", symbol: "figure.roll", selected: $accessibleOnly)
+                        filterChip("Needs recheck", symbol: "exclamationmark.bubble", selected: $recheckOnly)
+                    }.padding(.horizontal, 20).padding(.bottom, 10)
+                }
+              }.background(Color(uiColor: .systemBackground))
             }
+            .safeAreaPadding(.bottom, 20)
             .scrollDismissesKeyboard(.interactively)
             .refreshable { await store.load() }
         }
     }
-    var profilePage: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Image(systemName: "person.crop.circle.fill").font(.system(size: 68)).foregroundStyle(violet).frame(maxWidth: .infinity).padding()
-                    Text(store.demo ? "Demo explorer" : store.user?.email ?? "OpenWC member").font(.headline)
-                    Text("Small contributions. Real relief.").foregroundStyle(.secondary)
-                }
-                Section("Your contributions") {
-                    let mine = store.places.filter { $0.user_id == store.user?.id }
-                    if mine.isEmpty { Text("Your shared places will appear here.").foregroundStyle(.secondary) }
-                    ForEach(mine) { place in Button(place.name) { selected = place } }
-                }
-                Section { Button(store.demo ? "Exit demo" : "Log out", role: .destructive) { Task { await store.signOut() } } }
-            }.navigationTitle("Your corner.")
-        }
+    func filterChip(_ title: String, symbol: String, selected: Binding<Bool>) -> some View {
+        Button { selected.wrappedValue.toggle() } label: {
+            Label(title, systemImage: symbol).font(.caption.bold()).padding(.horizontal, 12).padding(.vertical, 9)
+                .background(selected.wrappedValue ? violet.opacity(0.25) : Color(uiColor: .secondarySystemBackground), in: Capsule())
+        }.buttonStyle(.plain)
     }
+    var profilePage: some View { ProfilePage() }
+
 }
 
 struct Pin: View {
+    var name: String = ""
     var body: some View {
         VStack(spacing: -4) {
-            Image(systemName: "key.fill").font(.system(size: 19, weight: .bold)).foregroundStyle(.white).frame(width: 43, height: 43).background(violet.gradient, in: RoundedRectangle(cornerRadius: 16)).overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.55), lineWidth: 2)).shadow(color: violet.opacity(0.5), radius: 10)
+            BusinessBadge(name: name, size: 43)
+                .overlay(RoundedRectangle(cornerRadius: 13).stroke(.white.opacity(0.7), lineWidth: 2))
+                .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
             Image(systemName: "arrowtriangle.down.fill").font(.system(size: 12)).foregroundStyle(violet)
         }
     }
 }
 
 struct PlaceRow: View {
+    @EnvironmentObject var store: AppStore
     let place: Place
     let origin: CLLocation?
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "cup.and.saucer.fill").font(.title2).foregroundStyle(violet).frame(width: 48, height: 52).background(violet.opacity(0.12), in: RoundedRectangle(cornerRadius: 15))
+            BusinessBadge(name: place.name)
             VStack(alignment: .leading, spacing: 5) {
                 Text(place.name).font(.headline).foregroundStyle(.primary)
                 Text(origin.map { "\(Int(place.distance(from: $0))) m away · Community shared" } ?? "Community shared").font(.caption).foregroundStyle(.secondary)
                 if place.accessible { Label("Step-free · contributor reported", systemImage: "figure.roll").font(.caption2).foregroundStyle(violet) }
+                if let summary = store.summaries[place.id] {
+                    Text(summary.title).font(.caption2).foregroundStyle(summary.color)
+                }
             }
             Spacer(minLength: 4)
             Text(place.code).font(.system(.title3, design: .monospaced).bold()).foregroundStyle(violet)
@@ -222,7 +236,16 @@ struct PlaceDetail: View {
                     if let path = place.photo_path, let url = store.photoURL(path) {
                         AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Rectangle().fill(violet.opacity(0.15)).overlay(ProgressView()) }.frame(height: 220).clipped().clipShape(RoundedRectangle(cornerRadius: 24))
                     }
-                    Text(place.name).font(.largeTitle.bold())
+                    HStack {
+                        BusinessBadge(name: place.name, size: 56)
+                        Text(place.name).font(.largeTitle.bold())
+                        Spacer(minLength: 0)
+                    }
+                    Button {
+                        Task { do { try await store.toggleSaved(place) } catch { store.message = error.localizedDescription } }
+                    } label: {
+                        Label(store.savedIDs.contains(place.id) ? "Saved place" : "Save for later", systemImage: store.savedIDs.contains(place.id) ? "bookmark.fill" : "bookmark")
+                    }.buttonStyle(.bordered)
                     Label(place.address, systemImage: "mappin.and.ellipse").foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 14) {
                         Text("TOILET ACCESS CODE").font(.caption.bold()).tracking(2).foregroundStyle(.secondary)
@@ -233,12 +256,13 @@ struct PlaceDetail: View {
                     if place.accessible { Label("Step-free access reported by contributor", systemImage: "figure.roll") }
                     Button { let item = MKMapItem(placemark: MKPlacemark(coordinate: place.coordinate)); item.name = place.name; item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking]) } label: { Label("Walking directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill").frame(maxWidth: .infinity).padding() }.buttonStyle(.borderedProminent)
                     Text("Community shared, not independently verified. Opening hours, access and codes can change. Follow the venue’s access rules.").font(.caption).foregroundStyle(.secondary)
-                    Button("Code no longer works?") { Task { await store.report(place) } }.font(.subheadline)
+                    CommunityStatusView(place: place)
                 }.padding(24)
             }.toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
         .alert("OpenWC", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) { Button("OK") { store.message = nil } } message: { Text(store.message ?? "") }
         .presentationDetents([.large])
+        .task { await store.loadCommunity() }
     }
 }
 
@@ -255,6 +279,10 @@ struct SettingsView: View {
                     Text("OpenWC uses your location on device to center the map and calculate distances. Apple Maps may receive map or search-region information. You can also select places manually without location access.")
                     Button("Open iOS settings") { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
                 }
+                Section("Your data") {
+                    NavigationLink("Data & community overview") { AnalyticsView() }
+                    Text("The overview uses your contributions and code checks. It does not record a location history.").font(.caption).foregroundStyle(.secondary)
+                }
                 Section("The OpenWC spirit") {
                     Text("Share only codes you have permission to share. Add accurate access notes and keep photos free of people and private information.")
                     Text("Step-free labels are community reported and do not guarantee accessibility.").foregroundStyle(.secondary)
@@ -267,7 +295,9 @@ struct SettingsView: View {
                     Text("© 2026 Vojtěch Klepáček. All rights reserved.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
-            }.navigationTitle("Your preferences.")
+            }
+            .safeAreaPadding(.bottom, 24)
+            .navigationTitle("Your preferences.")
         }
     }
 }
