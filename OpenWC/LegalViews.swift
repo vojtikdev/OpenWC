@@ -71,7 +71,9 @@ struct PrivacyRequestView: View {
         Form {
             Section {
                 Text("Requests go privately to the OpenWC operator, Vojtěch Klepáček. They are processed manually. A deletion request does not immediately delete your account.")
-                Text("The service is in development. A public support/privacy contact must be added before launch.").font(.caption).foregroundStyle(.secondary)
+                Link("Email: vojtechklep@gmail.com", destination: URL(string: "mailto:vojtechklep@gmail.com")!)
+                Link("GitHub: vojtikdev", destination: URL(string: "https://github.com/vojtikdev")!)
+                Text("Discord: vojtikdev").font(.caption).textSelection(.enabled)
             }
             Section("New request") {
                 Picker("Request", selection: $kind) {

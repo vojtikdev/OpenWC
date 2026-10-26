@@ -1,6 +1,6 @@
 # OpenWC Privacy Policy
 
-**Development draft · Version 2026-10-26.** The operator/controller is **Vojtěch Klepáček**. A public privacy email/address has not yet been supplied. This is a release blocker. During testing, signed-in users can submit private access, correction, deletion or other requests in Settings → Privacy & account requests. The operator must monitor those requests and complete this notice before public launch.
+**Development draft · Version 2026-10-26.** The operator/controller is **Vojtěch Klepáček**. Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues. During testing, signed-in users can submit private access, correction, deletion or other requests in Settings → Privacy & account requests. The operator must monitor those requests and complete this notice before public launch.
 
 ## Data used by OpenWC
 
@@ -40,4 +40,4 @@ Database row-level policies restrict writes and private requests to the authenti
 
 ## Changes and contact
 
-The version above identifies this notice. Material changes should be communicated as required. A working public contact channel, verified controller details, retention schedule, request monitoring and legal review are required before the development draft can become a final public notice.
+The version above identifies this notice. Material changes should be communicated as required. Verified controller details, retention schedule, request monitoring and legal review are required before the development draft can become a final public notice.

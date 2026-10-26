@@ -12,3 +12,5 @@
 - Updated the storage upload call, pinned Supabase Swift 2.55.4, preserved the Debug active-architecture correction, and added a macOS build workflow.
 
 Legal pages remain development drafts pending a public contact, finalized operational policies and review. The workflow is prepared but has not run until the repository is published. Native compilation/device testing remain unverified in this Linux environment.
+
+- Added the operator’s supplied public email, GitHub and Discord contact details to legal documents and in-app requests.

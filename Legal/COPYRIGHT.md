@@ -16,4 +16,4 @@ Restaurant and business names identify locations only. OpenWC does not claim aff
 
 ## Copyright concerns
 
-Do not upload images or other content you are not permitted to share. During testing, signed-in users can report copyright/privacy concerns in Settings → Privacy & account requests. Include enough information to identify the relevant content without adding sensitive information. A working public contact for rights holders who do not have accounts must be configured before public launch.
+Do not upload images or other content you are not permitted to share. During testing, signed-in users can report copyright/privacy concerns in Settings → Privacy & account requests. Include enough information to identify the relevant content without adding sensitive information. Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues.

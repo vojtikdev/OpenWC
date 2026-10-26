@@ -1,6 +1,6 @@
 # OpenWC Terms of Service
 
-**Development draft · Version 2026-10-26.** These terms must be reviewed and completed before a public launch. Operator: **Vojtěch Klepáček**. A public legal/support contact has not yet been configured. During testing, signed-in users can submit a private request under Settings → Privacy & account requests. Do not rely on this draft as confirmation of legal or App Store compliance.
+**Development draft · Version 2026-10-26.** These terms must be reviewed and completed before a public launch. Operator: **Vojtěch Klepáček**. Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues. During testing, signed-in users can submit a private request under Settings → Privacy & account requests. Do not rely on this draft as confirmation of legal or App Store compliance.
 
 ## 1. What OpenWC provides
 
@@ -24,7 +24,7 @@ Community information may be incorrect, outdated or incomplete. A shared code is
 
 ## 6. Moderation
 
-The operator may investigate reports, remove content or restrict accounts where reasonably necessary to address violations, security risks or legal obligations. Enforcement should be proportionate and respect applicable law. A complete moderation and appeals process, monitoring of reports, and a public contact channel must be established before a public launch.
+The operator may investigate reports, remove content or restrict accounts where reasonably necessary to address violations, security risks or legal obligations. Enforcement should be proportionate and respect applicable law. A complete moderation and appeals process, monitoring of reports, must be established before a public launch.
 
 ## 7. Service changes and liability
 
@@ -32,4 +32,4 @@ The service may be changed, interrupted or discontinued. To the extent permitted
 
 ## 8. Privacy, requests and disputes
 
-Read the Privacy Policy for information about data use and your rights. The law and courts that apply are determined by applicable rules; these terms do not remove mandatory consumer protections or rights to complain to a competent supervisory authority. Material changes should be communicated before taking effect where required. The operator must add an effective contact method and complete a legal review before public distribution.
+Read the Privacy Policy for information about data use and your rights. The law and courts that apply are determined by applicable rules; these terms do not remove mandatory consumer protections or rights to complain to a competent supervisory authority. Material changes should be communicated before taking effect where required. The operator must complete a legal review before public distribution.

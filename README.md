@@ -48,11 +48,11 @@ The app loads places in one request, subject to the backend's default row limit.
 
 **© 2026 Vojtěch Klepáček. All rights reserved.** No general open-source license has been chosen for the original project. Third-party dependencies keep their own licenses; see `LICENSE` and `Legal/COPYRIGHT.md`.
 
-The documents in `Legal/` are bundled into the app and accessible before registration and from Settings. They are **development drafts**, not a declaration that the app is legally compliant or ready for the App Store. A public contact email has not yet been supplied and is not inferred from a private account profile.
+The documents in `Legal/` are bundled into the app and accessible before registration and from Settings. They are **development drafts**, not a declaration that the app is legally compliant or ready for the App Store. Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues.
 
 Before public app launch:
 
-- Add a working public privacy/support/copyright contact and verified controller details.
+- Complete and verify controller details and operational arrangements.
 - Finalize retention, backup expiry, provider/transfer arrangements, moderation, age safeguards and a request-handling process.
 - Have the legal text reviewed for the actual jurisdictions and operating arrangements.
 - Publish the privacy notice at a stable public URL for the App Store listing.
@@ -101,3 +101,7 @@ Backend checks performed in rolled-back transactions: own request insertion/read
 - `.github/workflows/ios-build.yml`: macOS simulator build workflow.
 
 The Figma file could not be accessed during implementation; the design follows the written brief.
+
+## Contact
+
+Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev](https://github.com/vojtikdev). Discord: **vojtikdev**. Use email for private privacy, account, security or copyright requests; do not post sensitive details in public issues.
