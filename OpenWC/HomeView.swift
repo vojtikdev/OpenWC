@@ -116,20 +116,10 @@ struct HomeView: View {
         .onPreferenceChange(MapFooterHeightKey.self) { if abs(footerHeight - $0) > 1 { footerHeight = $0 } }
     }
     private var nativeMap: some View {
-            Map(position: $position) {
-                UserAnnotation()
-                ForEach(filtered) { place in
-                    Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
-                        Button { selected = place } label: { Pin(name: place.name) }
-                            .buttonStyle(.plain).accessibilityLabel("View \(place.name)")
-                    }
-                }
-            }
-            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
-            .safeAreaPadding(.bottom, footerHeight)
+        FullBleedMap(requestedRegion: position.region, places: filtered, footerInset: footerHeight,
+                     showUserLocation: !store.demo && location.location != nil,
+                     onMove: { viewport = $0 }, onSelect: { selected = $0 })
             .ignoresSafeArea(.container)
-            .accessibilityIdentifier("mainMap")
-            .onMapCameraChange(frequency: .onEnd) { viewport = $0.region }
     }
     @ViewBuilder private var mapCard: some View {
         if store.browseArea == nil && !store.demo {
@@ -209,7 +199,7 @@ struct HomeView: View {
             .navigationTitle(savedOnly ? "Saved worldwide" : store.browseArea?.name ?? "Explore worldwide")
             .safeAreaInset(edge: .top, spacing: 0) {
                 VStack(spacing: 10) {
-                    searchField(prompt: "Search nearby places").accessibilityIdentifier("nearbySearchContainer")
+                    searchField(prompt: "Search nearby places")
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             Button { choosingCity = true } label: { Label("City", systemImage: "globe").font(.caption.bold()).padding(10) }

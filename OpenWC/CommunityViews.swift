@@ -65,7 +65,7 @@ struct ProfilePage: View {
                 Section {
                     VStack(spacing: 12) {
                         ProfileAvatar(size: 88)
-                        Text(store.demo ? "Demo explorer" : store.profile?.display_name ?? "OpenWC explorer")
+                        Text(store.profile?.display_name ?? (store.demo ? "Demo explorer" : "OpenWC explorer"))
                             .font(.title2.bold())
                         if let bio = store.profile?.bio, !bio.isEmpty { Text(bio).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center) }
                         Text(store.user?.email ?? "Fictional demo account").font(.caption).foregroundStyle(.secondary)
