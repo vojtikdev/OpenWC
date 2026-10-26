@@ -26,25 +26,35 @@ struct HomeView: View {
     private var origin: CLLocation? { store.browseArea?.location ?? location.location }
     private var radius: Int { store.browseArea?.radius ?? 10000 }
     private var filtered: [Place] {
-        let source = savedOnly ? store.savedPlaces : store.places
-        let items = source.filter {
-            (!accessibleOnly || $0.accessible) && (!recheckOnly || store.summaries[$0.id]?.needsRecheck == true) &&
-            (search.isEmpty || $0.name.localizedStandardContains(search) || $0.address.localizedStandardContains(search)) &&
-            (savedOnly || origin == nil || $0.distance(from: origin!) <= Double(radius))
-        }
-        return items.sorted { a, b in
-            switch sorting {
-            case .newest:
-                if a.created_at != b.created_at { return (a.created_at ?? "") > (b.created_at ?? "") }
-            case .confirmed:
-                let first = store.summaries[a.id]?.working_count ?? 0
-                let second = store.summaries[b.id]?.working_count ?? 0
-                if first != second { return first > second }
-            case .nearest: break
+        let source: [Place] = savedOnly ? store.savedPlaces : store.places
+        let center = origin
+        let limit = Double(radius)
+        let items: [Place] = source.filter { place in
+            if accessibleOnly && !place.accessible { return false }
+            if recheckOnly && store.summaries[place.id]?.needsRecheck != true { return false }
+            if !search.isEmpty {
+                let matchesName = place.name.localizedStandardContains(search)
+                let matchesAddress = place.address.localizedStandardContains(search)
+                if !matchesName && !matchesAddress { return false }
             }
-            if let origin { return a.distance(from: origin) < b.distance(from: origin) }
-            return a.name.localizedStandardCompare(b.name) == .orderedAscending
+            if !savedOnly, let center, place.distance(from: center) > limit { return false }
+            return true
         }
+        return items.sorted { isBefore($0, $1, center: center) }
+    }
+    private func isBefore(_ first: Place, _ second: Place, center: CLLocation?) -> Bool {
+        if sorting == .newest {
+            let firstDate = first.created_at ?? ""
+            let secondDate = second.created_at ?? ""
+            if firstDate != secondDate { return firstDate > secondDate }
+        }
+        if sorting == .confirmed {
+            let firstCount = store.summaries[first.id]?.working_count ?? 0
+            let secondCount = store.summaries[second.id]?.working_count ?? 0
+            if firstCount != secondCount { return firstCount > secondCount }
+        }
+        if let center { return first.distance(from: center) < second.distance(from: center) }
+        return first.name.localizedStandardCompare(second.name) == .orderedAscending
     }
     var body: some View {
         Group {
@@ -82,20 +92,7 @@ struct HomeView: View {
     }
     private var mapPage: some View {
         ZStack {
-            Map(position: $position) {
-                UserAnnotation()
-                ForEach(filtered) { place in
-                    Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
-                        Button { selected = place } label: { Pin(name: place.name) }
-                            .buttonStyle(.plain).accessibilityLabel("View \(place.name)")
-                    }
-                }
-            }
-            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
-            .safeAreaPadding(.bottom, footerHeight)
-            .ignoresSafeArea(.container)
-            .accessibilityIdentifier("mainMap")
-            .onMapCameraChange(frequency: .onEnd) { viewport = $0.region }
+            nativeMap
             VStack(spacing: 0) {
                 mapHeader
                 Spacer(minLength: 8)
@@ -117,6 +114,22 @@ struct HomeView: View {
             }
         }
         .onPreferenceChange(MapFooterHeightKey.self) { if abs(footerHeight - $0) > 1 { footerHeight = $0 } }
+    }
+    private var nativeMap: some View {
+            Map(position: $position) {
+                UserAnnotation()
+                ForEach(filtered) { place in
+                    Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
+                        Button { selected = place } label: { Pin(name: place.name) }
+                            .buttonStyle(.plain).accessibilityLabel("View \(place.name)")
+                    }
+                }
+            }
+            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+            .safeAreaPadding(.bottom, footerHeight)
+            .ignoresSafeArea(.container)
+            .accessibilityIdentifier("mainMap")
+            .onMapCameraChange(frequency: .onEnd) { viewport = $0.region }
     }
     @ViewBuilder private var mapCard: some View {
         if store.browseArea == nil && !store.demo {
