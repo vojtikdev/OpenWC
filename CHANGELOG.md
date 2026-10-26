@@ -39,3 +39,4 @@ Legal pages remain development drafts pending a public contact, finalized operat
 
 - Verified five UI tests on Xcode 26.6 with no failures, including the full-height map and custom demo profile name; reviewed map, profile and Settings screenshots.
 - Verified worldwide/date-line geographic queries and private avatar ownership/removal constraints in rolled-back database checks.
+- Reverified all five tests after adjusting MapKit attribution margins; the full-screen map and unobstructed Apple Maps attribution are confirmed in the retained screenshot.
