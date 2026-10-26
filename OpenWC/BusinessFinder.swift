@@ -23,7 +23,7 @@ final class BusinessFinder: ObservableObject {
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = value
             request.resultTypes = .pointOfInterest
-            request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.restaurant, .cafe, .bakery, .brewery, .foodMarket, .hotel, .store, .shoppingMall, .gasStation, .bank])
+            request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.restaurant, .cafe, .bakery, .brewery, .foodMarket, .hotel, .store, .gasStation, .bank])
             request.region = MKCoordinateRegion(center: anchor, latitudinalMeters: 10000, longitudinalMeters: 10000)
             let search = MKLocalSearch(request: request)
             activeSearch = search
@@ -70,7 +70,7 @@ final class BusinessFinder: ObservableObject {
     }
     private func nearbyItems(_ coordinate: CLLocationCoordinate2D) async throws -> [MKMapItem] {
         let request = MKLocalPointsOfInterestRequest(center: coordinate, radius: 500)
-        request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.restaurant, .cafe, .bakery, .brewery, .foodMarket, .hotel, .store, .shoppingMall, .gasStation, .bank])
+        request.pointOfInterestFilter = MKPointOfInterestFilter(including: [.restaurant, .cafe, .bakery, .brewery, .foodMarket, .hotel, .store, .gasStation, .bank])
         let search = MKLocalSearch(request: request)
         activeSearch = search
         let response = try await search.start()
