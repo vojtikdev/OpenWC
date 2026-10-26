@@ -9,7 +9,10 @@ struct AddPlaceView: View {
     let regionCenter: CLLocationCoordinate2D?
     @State private var query = ""
     @State private var results: [MKMapItem] = []
-    @State private var selected: MKMapItem?
+    @State private var coordinate: CLLocationCoordinate2D?
+    @State private var businessName = ""
+    @State private var address = ""
+    @State private var choosingPin = false
     @State private var code = ""
     @State private var notes = ""
     @State private var accessible = false
@@ -18,7 +21,7 @@ struct AddPlaceView: View {
     @State private var working = false
     @State private var searching = false
     @State private var error: String?
-    var valid: Bool { selected != nil && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && code.count <= 32 && notes.count <= 1000 }
+    var valid: Bool { coordinate != nil && !businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && businessName.count <= 200 && address.count <= 1000 && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && code.count <= 32 && notes.count <= 1000 }
     var body: some View {
         NavigationStack {
             Form {
@@ -32,13 +35,28 @@ struct AddPlaceView: View {
                         TextField("Business name or address", text: $query).onSubmit { Task { await search() } }
                         Button { Task { await search() } } label: { if searching { ProgressView() } else { Image(systemName: "magnifyingglass") } }.disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || searching).accessibilityLabel("Search businesses")
                     }
-                    if let selected {
-                        Label(selected.name ?? "Selected business", systemImage: "checkmark.circle.fill").foregroundStyle(.purple)
-                        Text(selected.placemark.title ?? "").font(.caption).foregroundStyle(.secondary)
-                        Map(initialPosition: .region(.init(center: selected.placemark.coordinate, span: .init(latitudeDelta: 0.003, longitudeDelta: 0.003)))) { Marker(selected.name ?? "Business", coordinate: selected.placemark.coordinate).tint(.purple) }.frame(height: 150).id("\(selected.placemark.coordinate.latitude),\(selected.placemark.coordinate.longitude)")
+                    Button { choosingPin = true } label: {
+                        Label(coordinate == nil ? "Choose a spot on the map" : "Adjust the map pin", systemImage: "mappin.and.ellipse")
+                    }
+                    TextField("Business or place name", text: $businessName)
+                    TextField("Street / address (optional)", text: $address)
+                    if let coordinate {
+                        Label("Location pinned", systemImage: "checkmark.circle.fill").foregroundStyle(.purple)
+                        Map(initialPosition: .region(.init(center: coordinate, span: .init(latitudeDelta: 0.003, longitudeDelta: 0.003)))) {
+                            Marker(businessName.isEmpty ? "Selected location" : businessName, coordinate: coordinate).tint(.purple)
+                        }
+                        .frame(height: 150).allowsHitTesting(false)
+                        .id("\(coordinate.latitude),\(coordinate.longitude)")
+                        Text(String(format: "%.6f, %.6f", coordinate.latitude, coordinate.longitude))
+                            .font(.caption.monospaced()).foregroundStyle(.secondary)
                     }
                     ForEach(Array(results.enumerated()), id: \.offset) { _, item in
-                        Button { selected = item; results = [] } label: {
+                        Button {
+                            coordinate = item.placemark.coordinate
+                            businessName = item.name ?? ""
+                            address = item.placemark.title ?? ""
+                            results = []
+                        } label: {
                             VStack(alignment: .leading, spacing: 4) { Text(item.name ?? "Business"); Text(item.placemark.title ?? "").font(.caption).foregroundStyle(.secondary) }
                         }
                     }
@@ -61,6 +79,11 @@ struct AddPlaceView: View {
             }.navigationTitle("Share a little relief")
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(working) } }
                 .interactiveDismissDisabled(working)
+                .sheet(isPresented: $choosingPin) {
+                    MapPinPicker(initialCoordinate: coordinate ?? regionCenter) { value in
+                        coordinate = value
+                    }
+                }
                 .onChange(of: photoItem) { _, item in
                     Task {
                         do {
@@ -90,11 +113,11 @@ struct AddPlaceView: View {
         } catch { self.error = error.localizedDescription }
     }
     func save() async {
-        guard let selected, valid else { return }
+        guard let coordinate, valid else { return }
         working = true; error = nil
         defer { working = false }
         do {
-            try await store.add(item: selected, code: code.trimmingCharacters(in: .whitespacesAndNewlines), notes: notes.trimmingCharacters(in: .whitespacesAndNewlines), accessible: accessible, photo: photo)
+            try await store.add(name: businessName.trimmingCharacters(in: .whitespacesAndNewlines), address: address.trimmingCharacters(in: .whitespacesAndNewlines), coordinate: coordinate, code: code.trimmingCharacters(in: .whitespacesAndNewlines), notes: notes.trimmingCharacters(in: .whitespacesAndNewlines), accessible: accessible, photo: photo)
             dismiss()
         } catch { self.error = error.localizedDescription }
     }

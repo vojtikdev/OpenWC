@@ -23,13 +23,18 @@ final class AppStore: ObservableObject {
         }
     }
     func preview() { demo = true; places = Place.samples }
-    func authenticate(email: String, password: String, register: Bool) async {
+    func authenticate(email: String, password: String, register: Bool, acceptedTerms: Bool = false) async {
         guard let client = Backend.client else { message = "Connect your Supabase project using Config.xcconfig to enable accounts. You can explore the demo now."; return }
+        guard !register || acceptedTerms else { message = "Read and accept the Terms of Service before registering."; return }
+        message = nil
         loading = true
         defer { loading = false }
         do {
             if register {
-                let result = try await client.auth.signUp(email: email, password: password)
+                let result = try await client.auth.signUp(email: email, password: password, data: [
+                    "terms_version": .string("2026-10-26"),
+                    "terms_accepted_at": .string(ISO8601DateFormatter().string(from: Date()))
+                ])
                 if result.session == nil { message = "Check your email to confirm your account, then return here and log in." }
             } else { try await client.auth.signIn(email: email, password: password) }
         } catch { message = error.localizedDescription }
@@ -46,7 +51,7 @@ final class AppStore: ObservableObject {
         do { try await Backend.client?.auth.signOut(); user = nil; places = [] }
         catch { message = error.localizedDescription }
     }
-    func add(item: MKMapItem, code: String, notes: String, accessible: Bool, photo: Data?) async throws {
+    func add(name: String, address: String, coordinate: CLLocationCoordinate2D, code: String, notes: String, accessible: Bool, photo: Data?) async throws {
         guard !demo, let user, let client = Backend.client else { throw AppError.message("Log in to share a real place. Demo mode cannot publish.") }
         let id = UUID()
         var path: String?
@@ -55,7 +60,7 @@ final class AppStore: ObservableObject {
             try await client.storage.from("place-photos").upload(path: value, file: photo, options: FileOptions(contentType: "image/jpeg", upsert: false))
             path = value
         }
-        let place = Place(id: id, user_id: user.id, name: item.name ?? "Business", address: item.placemark.title ?? "", latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude, code: code, notes: notes, accessible: accessible, photo_path: path)
+        let place = Place(id: id, user_id: user.id, name: name, address: address, latitude: coordinate.latitude, longitude: coordinate.longitude, code: code, notes: notes, accessible: accessible, photo_path: path)
         do {
             try await client.from("places").insert(place).execute()
             await load()

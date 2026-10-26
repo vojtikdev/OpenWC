@@ -2,7 +2,7 @@ import SwiftUI
 import MapKit
 import UIKit
 
-private let violet = Color(red: 0.66, green: 0.46, blue: 1)
+let violet = Color(red: 0.66, green: 0.46, blue: 1)
 
 struct RootView: View {
     @EnvironmentObject var store: AppStore
@@ -17,6 +17,7 @@ struct RootView: View {
 struct WelcomeView: View {
     @EnvironmentObject var store: AppStore
     @State private var auth: Bool?
+    @State private var legal: LegalDocument?
     var body: some View {
         ZStack {
             Map(initialPosition: .region(.init(center: .init(latitude: 50.082, longitude: 14.424), span: .init(latitudeDelta: 0.018, longitudeDelta: 0.018)))) {
@@ -36,39 +37,18 @@ struct WelcomeView: View {
                     Button { auth = false } label: { Text("I already have an account").frame(maxWidth: .infinity).padding(18).background(.ultraThinMaterial, in: Capsule()).foregroundStyle(.white) }
                     Button("Explore a demo") { store.preview() }.font(.subheadline).foregroundStyle(.white.opacity(0.7)).padding(8)
                 }
+                HStack {
+                    Button("Terms") { legal = .terms }
+                    Spacer()
+                    Button("Privacy") { legal = .privacy }
+                    Spacer()
+                    Button("Copyright") { legal = .copyright }
+                }.font(.caption).foregroundStyle(.white.opacity(0.8))
                 Text("Built by people. Open to everyone.").font(.caption).foregroundStyle(.white.opacity(0.45)).frame(maxWidth: .infinity)
             }.padding(28).padding(.top, 20)
         }
         .sheet(isPresented: Binding(get: { auth != nil }, set: { if !$0 { auth = nil } })) { AuthView(register: auth ?? false) }
-    }
-}
-
-struct AuthView: View {
-    @EnvironmentObject var store: AppStore
-    @Environment(\.dismiss) var dismiss
-    @State var register: Bool
-    @State private var email = ""
-    @State private var password = ""
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    Text(register ? "Join a more open city." : "Good to see you again.").font(.title2.bold()).listRowBackground(Color.clear)
-                    TextField("Email address", text: $email).textContentType(.emailAddress).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    SecureField("Password (at least 8 characters)", text: $password).textContentType(register ? .newPassword : .password)
-                }
-                Section {
-                    Button { Task { await store.authenticate(email: email.trimmingCharacters(in: .whitespaces), password: password, register: register) } } label: {
-                        HStack { Text(register ? "Create account" : "Log in"); Spacer(); if store.loading { ProgressView() } else { Image(systemName: "arrow.right") } }
-                    }.disabled(store.loading || !email.contains("@") || password.count < 8)
-                    Button(register ? "Already registered? Log in" : "New here? Create an account") { register.toggle() }
-                }
-                if let message = store.message { Section { Text(message).foregroundStyle(.secondary) } }
-                if Backend.client == nil { Section { Text("Accounts require a connected Supabase project. Demo exploration is available from the welcome screen.").foregroundStyle(.secondary) } }
-            }.navigationTitle(register ? "Create account" : "Welcome back")
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
-                .onChange(of: store.user?.id) { _, value in if value != nil { dismiss() } }
-        }
+        .sheet(item: $legal) { LegalDocumentView(document: $0) }
     }
 }
 
@@ -101,7 +81,7 @@ struct HomeView: View {
                     .overlay(alignment: .top) { mapHeader }
                     .overlay(alignment: .bottomTrailing) {
                         Button { location.request(); if let origin { center(origin.coordinate) } } label: { Image(systemName: "location.fill").padding(16).background(.regularMaterial, in: Circle()) }
-                            .accessibilityLabel("Center on my location").padding(.trailing, 20).padding(.bottom, 210)
+                            .accessibilityLabel("Center on my location").padding(.trailing, 20).padding(.bottom, 140)
                     }
                 VStack(spacing: 12) {
                     if let place = filtered.first {
@@ -110,12 +90,12 @@ struct HomeView: View {
                     } else {
                         Text(store.loading ? "Finding shared places…" : "No shared places here yet. Be the first to add one.").padding(20).frame(maxWidth: .infinity).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
                     }
-                }.padding(.horizontal, 18).padding(.bottom, 105)
+                }.padding(.horizontal, 18).padding(.bottom, 16)
             } else if tab == 1 { listPage }
             else if tab == 3 { profilePage }
             else { SettingsView(location: location) }
-            navigation
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) { navigation }
         .alert("OpenWC", isPresented: Binding(get: { store.message != nil && selected == nil && !adding }, set: { if !$0 { store.message = nil } })) {
             Button("OK") { store.message = nil }
         } message: { Text(store.message ?? "") }
@@ -163,8 +143,25 @@ struct HomeView: View {
                 if store.demo { Text("Demo listings and codes are fictional.").foregroundStyle(violet) }
                 ForEach(filtered) { place in Button { selected = place } label: { PlaceRow(place: place, origin: origin) }.buttonStyle(.plain) }
                 if filtered.isEmpty { ContentUnavailableView("No places found", systemImage: "mappin.slash", description: Text("Try another search or share the first place.")) }
-                Color.clear.frame(height: 100).listRowBackground(Color.clear)
-            }.navigationTitle("A little closer.").searchable(text: $search, prompt: "Search shared places").refreshable { await store.load() }
+            }
+            .navigationTitle("A little closer.")
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(violet)
+                    TextField("Search nearby places", text: $search)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .accessibilityIdentifier("nearbySearch")
+                    if !search.isEmpty {
+                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
+                            .accessibilityLabel("Clear search")
+                    }
+                }
+                .padding(15).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+                .padding(.horizontal, 20).padding(.vertical, 10)
+                .background(Color(uiColor: .systemBackground))
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .refreshable { await store.load() }
         }
     }
     var profilePage: some View {
@@ -181,7 +178,7 @@ struct HomeView: View {
                     ForEach(mine) { place in Button(place.name) { selected = place } }
                 }
                 Section { Button(store.demo ? "Exit demo" : "Log out", role: .destructive) { Task { await store.signOut() } } }
-            }.navigationTitle("Your corner.").safeAreaPadding(.bottom, 110)
+            }.navigationTitle("Your corner.")
         }
     }
 }
@@ -262,8 +259,15 @@ struct SettingsView: View {
                     Text("Share only codes you have permission to share. Add accurate access notes and keep photos free of people and private information.")
                     Text("Step-free labels are community reported and do not guarantee accessibility.").foregroundStyle(.secondary)
                 }
-                Section { Text("OpenWC · Made for a more open city.").font(.footnote).foregroundStyle(.secondary) }
-            }.navigationTitle("Your preferences.").safeAreaPadding(.bottom, 110)
+                Section("Legal & privacy") {
+                    ForEach(LegalDocument.allCases) { document in
+                        NavigationLink(document.title) { LegalDocumentContent(document: document) }
+                    }
+                    NavigationLink("Privacy & account requests") { PrivacyRequestView() }
+                    Text("© 2026 Vojtěch Klepáček. All rights reserved.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }.navigationTitle("Your preferences.")
         }
     }
 }
