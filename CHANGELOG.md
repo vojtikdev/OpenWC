@@ -27,3 +27,12 @@ Legal pages remain development drafts pending a public contact, finalized operat
 
 - Verified the updated app builds on Xcode 26.6 and all three iPhone simulator UI tests pass (Settings footer clearance, search with keyboard, exact pin selection).
 - Verified profile upserts/ownership and community vote privacy/count/timestamp protections in rolled-back backend tests; no synthetic votes or test accounts retained.
+
+## 2026-10-26 — Full map, worldwide discovery and personal photos
+
+- Removed the map’s solid footer gap while preserving clearance on other pages.
+- Added worldwide city/address search, viewport search, search radius and sorting; saved/contributed places load independently of the active city.
+- Added private uploaded profile photos, downsampled/cropped previews, photo replacement/removal and demo profile editing.
+- Added share-place/address-copy actions and improved distance labels.
+- Added geographic queries with date-line-safe distances and updated privacy text for approximate server-side area searches.
+- Added UI checks for full-height map rendering, city-search access and custom profile names/photo entry.

@@ -49,6 +49,32 @@ final class OpenWCUITests: XCTestCase {
         exact.tap()
         XCTAssertTrue(app.staticTexts["Location pinned"].waitForExistence(timeout: 5))
     }
+    func testMapExtendsBehindBottomNavigation() {
+        let map = app.descendants(matching: .any).matching(identifier: "mainMap").firstMatch
+        XCTAssertTrue(map.waitForExistence(timeout: 10))
+        XCTAssertGreaterThanOrEqual(map.frame.maxY, app.frame.maxY - 2)
+        XCTAssertTrue(app.buttons["chooseCityButton"].isHittable)
+        XCTAssertTrue(app.buttons["searchThisArea"].isHittable)
+        attach("Full bleed map and glass navigation")
+        app.buttons["chooseCityButton"].tap()
+        XCTAssertTrue(app.textFields["citySearchField"].waitForExistence(timeout: 5))
+    }
+    func testDemoProfileSupportsCustomNameAndPhotoEntry() {
+        app.buttons["tab-3"].tap()
+        let edit = app.buttons["Edit profile"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 5))
+        edit.tap()
+        let field = app.textFields["profileDisplayName"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        let old = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "Travel Explorer")
+        let photo = app.buttons["Choose profile photo"]
+        XCTAssertTrue(photo.exists)
+        attach("Custom name and profile photo editor")
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.staticTexts["Travel Explorer"].waitForExistence(timeout: 5))
+    }
     private func attach(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

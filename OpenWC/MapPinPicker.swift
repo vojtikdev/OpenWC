@@ -11,6 +11,7 @@ struct MapPinPicker: View {
     let onConfirm: (CLLocationCoordinate2D, MKMapItem?) -> Void
     @State private var searchRevision = 0
     @State private var waitingForSearch = true
+    @State private var choosingCity = false
 
     init(initialCoordinate: CLLocationCoordinate2D?, onConfirm: @escaping (CLLocationCoordinate2D, MKMapItem?) -> Void) {
         let initial = initialCoordinate ?? CLLocationCoordinate2D(latitude: 50.082, longitude: 14.424)
@@ -75,7 +76,17 @@ struct MapPinPicker: View {
                 }.padding(20).background(.regularMaterial)
             }
             .navigationTitle("Find the entrance").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .primaryAction) { Button { choosingCity = true } label: { Image(systemName: "globe") }.accessibilityLabel("Find a city or address") }
+            }
+            .sheet(isPresented: $choosingCity) {
+                CitySearchView { area in
+                    center = area.coordinate; settled = area.coordinate
+                    position = .region(MKCoordinateRegion(center: area.coordinate, latitudinalMeters: 2000, longitudinalMeters: 2000))
+                    searchRevision += 1
+                }
+            }
             .task(id: searchRevision) {
                 do { try await Task.sleep(for: .milliseconds(550)); try Task.checkCancellation() }
                 catch { return }

@@ -16,6 +16,14 @@ final class AppStore: ObservableObject {
     @Published var savedIDs: Set<UUID> = []
     @Published var communityError: String?
     @Published var checking = false
+    @Published var browseArea: BrowseArea?
+    @Published var ownPlaces: [Place] = []
+    @Published var savedPlaces: [Place] = []
+    @Published var avatarURL: URL?
+    @Published var demoAvatar: UIImage?
+    @Published var areaHasMore = false
+    private var loadToken = UUID()
+    private var communityToken = UUID()
     private var authTask: Task<Void, Never>?
     init() {
         guard let client = Backend.client else { return }
@@ -24,13 +32,13 @@ final class AppStore: ObservableObject {
                 guard let self else { return }
                 let previousID = self.user?.id
                 self.user = session?.user
-                if previousID != self.user?.id { self.profile = nil; self.checks = []; self.summaries = [:]; self.savedIDs = [] }
+                if previousID != self.user?.id { self.profile = nil; self.checks = []; self.summaries = [:]; self.savedIDs = []; self.avatarURL = nil; self.demoAvatar = nil; self.ownPlaces = []; self.savedPlaces = [] }
                 if session != nil { self.demo = false; await self.load() }
                 else if !self.demo { self.places = [] }
             }
         }
     }
-    func preview() { demo = true; places = Place.samples; profile = nil; checks = []; summaries = [:]; savedIDs = [] }
+    func preview() { demo = true; places = Place.samples; profile = nil; checks = []; summaries = [:]; savedIDs = []; savedPlaces = []; ownPlaces = []; avatarURL = nil; demoAvatar = nil; browseArea = .from(CLLocationCoordinate2D(latitude: 50.082, longitude: 14.424), name: "Prague · Demo") }
     func authenticate(email: String, password: String, register: Bool, acceptedTerms: Bool = false) async {
         guard let client = Backend.client else { message = "Connect your Supabase project using Config.xcconfig to enable accounts. You can explore the demo now."; return }
         guard !register || acceptedTerms else { message = "Read and accept the Terms of Service before registering."; return }
@@ -47,19 +55,36 @@ final class AppStore: ObservableObject {
             } else { try await client.auth.signIn(email: email, password: password) }
         } catch { message = error.localizedDescription }
     }
+    func loadArea(_ area: BrowseArea) async {
+        browseArea = area
+        await load()
+    }
     func load() async {
         guard !demo, let client = Backend.client, user != nil else { return }
+        let token = UUID(); loadToken = token
         loading = true
-        defer { loading = false }
+        defer { if token == loadToken { loading = false } }
         do {
-            places = try await client.from("places").select().order("created_at", ascending: false).execute().value
+            let items: [Place]
+            if let area = browseArea {
+                struct Params: Encodable { let center_lat: Double; let center_lon: Double; let radius_m: Int; let max_results: Int }
+                items = try await client.rpc("get_places_nearby", params: Params(center_lat: (area.latitude * 1000).rounded() / 1000, center_lon: (area.longitude * 1000).rounded() / 1000, radius_m: area.radius, max_results: 200)).execute().value
+            } else {
+                items = try await client.from("places").select().order("created_at", ascending: false).limit(200).execute().value
+            }
+            guard token == loadToken else { return }
+            places = items; areaHasMore = items.count == 200
             await loadCommunity()
-        }
-        catch { message = error.localizedDescription }
+        } catch { if token == loadToken { message = error.localizedDescription } }
     }
     func signOut() async {
-        if demo { demo = false; places = []; profile = nil; savedIDs = []; checks = []; summaries = [:]; return }
-        do { try await Backend.client?.auth.signOut(); user = nil; places = [] }
+        if demo { demo = false; places = []; profile = nil; savedIDs = []; checks = []; summaries = [:]; avatarURL = nil; demoAvatar = nil; ownPlaces = []; savedPlaces = []; browseArea = nil; return }
+        do {
+            try await Backend.client?.auth.signOut()
+            loadToken = UUID(); communityToken = UUID(); user = nil; places = []; profile = nil
+            savedIDs = []; savedPlaces = []; ownPlaces = []; checks = []; summaries = [:]
+            avatarURL = nil; demoAvatar = nil; browseArea = nil
+        }
         catch { message = error.localizedDescription }
     }
     func add(name: String, address: String, coordinate: CLLocationCoordinate2D, code: String, notes: String, accessible: Bool, photo: Data?) async throws {
@@ -81,39 +106,82 @@ final class AppStore: ObservableObject {
         }
     }
     func loadCommunity() async {
-        guard !demo, user != nil, let client = Backend.client else { return }
+        guard !demo, let accountID = user?.id, let client = Backend.client else { return }
+        let token = UUID(); communityToken = token
+        let visiblePlaces = places
         communityError = nil
         do {
             let profiles: [MemberProfile] = try await client.from("profiles").select().execute().value
-            profile = profiles.first
-            checks = try await client.from("code_checks").select().execute().value
-            let saved: [SavedPlace] = try await client.from("saved_places").select().execute().value
-            savedIDs = Set(saved.map(\.place_id))
-            if places.isEmpty { summaries = [:] }
-            else {
-                struct Params: Encodable { let place_ids: [UUID] }
-                let items: [CheckSummary] = try await client.rpc("get_code_check_summaries", params: Params(place_ids: places.map(\.id))).execute().value
-                summaries = Dictionary(uniqueKeysWithValues: items.map { ($0.place_id, $0) })
+            let loadedProfile = profiles.first
+            var loadedAvatar: URL?
+            if let path = loadedProfile?.avatar_path {
+                loadedAvatar = try? await client.storage.from("profile-photos").createSignedURL(path: path, expiresIn: 3600)
             }
-        } catch { communityError = "Community data couldn’t refresh. Pull to refresh or try again. " + error.localizedDescription }
+            let mine: [Place] = try await client.from("places").select().eq("user_id", value: accountID).order("created_at", ascending: false).limit(200).execute().value
+            let votes: [CodeCheck] = try await client.from("code_checks").select().execute().value
+            let saved: [SavedPlace] = try await client.from("saved_places").select().execute().value
+            let savedSet = Set(saved.map(\.place_id))
+            let loadedSaved: [Place]
+            if savedSet.isEmpty { loadedSaved = [] }
+            else { loadedSaved = try await client.from("places").select().in("id", values: Array(savedSet.prefix(200))).execute().value }
+            let ids = Array(Set((visiblePlaces + mine + loadedSaved).map(\.id)))
+            var loadedSummaries: [UUID: CheckSummary] = [:]
+            if !ids.isEmpty {
+                struct Params: Encodable { let place_ids: [UUID] }
+                let values: [CheckSummary] = try await client.rpc("get_code_check_summaries", params: Params(place_ids: ids)).execute().value
+                loadedSummaries = Dictionary(uniqueKeysWithValues: values.map { ($0.place_id, $0) })
+            }
+            guard user?.id == accountID, !demo, token == communityToken else { return }
+            profile = loadedProfile; avatarURL = loadedAvatar; ownPlaces = mine
+            checks = votes; savedIDs = savedSet; savedPlaces = loadedSaved; summaries = loadedSummaries
+        } catch {
+            if user?.id == accountID, token == communityToken { communityError = "Community data couldn’t refresh. Pull to refresh or try again. " + error.localizedDescription }
+        }
     }
-    func saveProfile(_ value: MemberProfile) async throws {
-        guard !demo, let user, value.user_id == user.id, let client = Backend.client else { throw AppError.message("Log in to edit your profile.") }
-        try await client.from("profiles").upsert(value, onConflict: "user_id").execute()
-        profile = value
+    func saveProfile(_ value: MemberProfile, photo: Data? = nil, removePhoto: Bool = false) async throws {
+        if demo {
+            profile = value
+            if let photo { demoAvatar = UIImage(data: photo) }
+            else if removePhoto { demoAvatar = nil }
+            return
+        }
+        guard let user, value.user_id == user.id, let client = Backend.client else { throw AppError.message("Log in to edit your profile.") }
+        var updated = value
+        let oldPath = profile?.avatar_path
+        var newPath: String?
+        if let photo {
+            let path = "\(user.id.uuidString.lowercased())/\(UUID().uuidString.lowercased()).jpg"
+            try await client.storage.from("profile-photos").upload(path, data: photo, options: FileOptions(contentType: "image/jpeg", upsert: false))
+            newPath = path; updated.avatar_path = path
+        } else if removePhoto { updated.avatar_path = nil }
+        do { try await client.from("profiles").upsert(updated, onConflict: "user_id").execute() }
+        catch {
+            if let newPath { _ = try? await client.storage.from("profile-photos").remove(paths: [newPath]) }
+            throw error
+        }
+        communityToken = UUID()
+        profile = updated
+        avatarURL = nil
+        if let path = updated.avatar_path { avatarURL = try? await client.storage.from("profile-photos").createSignedURL(path: path, expiresIn: 3600) }
+        if let oldPath, oldPath != updated.avatar_path { _ = try? await client.storage.from("profile-photos").remove(paths: [oldPath]) }
     }
     func toggleSaved(_ place: Place) async throws {
         if demo {
-            if savedIDs.contains(place.id) { savedIDs.remove(place.id) } else { savedIDs.insert(place.id) }
+            if savedIDs.contains(place.id) { savedIDs.remove(place.id); savedPlaces.removeAll { $0.id == place.id } }
+            else { savedIDs.insert(place.id); savedPlaces.append(place) }
             return
         }
         guard let user, let client = Backend.client else { throw AppError.message("Log in to save places.") }
         if savedIDs.contains(place.id) {
             try await client.from("saved_places").delete().eq("user_id", value: user.id).eq("place_id", value: place.id).execute()
+            communityToken = UUID()
             savedIDs.remove(place.id)
+            savedPlaces.removeAll { $0.id == place.id }
         } else {
             try await client.from("saved_places").insert(SavedPlace(user_id: user.id, place_id: place.id)).execute()
+            communityToken = UUID()
             savedIDs.insert(place.id)
+            savedPlaces.append(place)
         }
     }
     func castCheck(_ place: Place, works: Bool) async throws {

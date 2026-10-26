@@ -7,6 +7,17 @@ struct MemberProfile: Codable {
     var bio: String
     var avatar_symbol: String
     var accent: String
+    var avatar_path: String? = nil
+    enum CodingKeys: String, CodingKey { case user_id, display_name, bio, avatar_symbol, accent, avatar_path }
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(user_id, forKey: .user_id)
+        try values.encode(display_name, forKey: .display_name)
+        try values.encode(bio, forKey: .bio)
+        try values.encode(avatar_symbol, forKey: .avatar_symbol)
+        try values.encode(accent, forKey: .accent)
+        try values.encode(avatar_path, forKey: .avatar_path)
+    }
     var color: Color {
         switch accent { case "blue": return .blue; case "mint": return .mint; case "orange": return .orange; default: return violet }
     }

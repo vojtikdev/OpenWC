@@ -33,18 +33,18 @@ This working copy contains the existing OpenWC project's URL and public publisha
 
 The connected project is `vpqezabichkjiwllczsg`, in EU Frankfurt. **Both SQL files have already been applied there. Do not rerun them against that project.** Existing contributions are preserved.
 
-The community update also applies `Database/community_features.sql`, adding private profiles, saved places, current code checks and an authenticated aggregate-summary RPC. It has already been applied to the connected project. Raw voter identities stay private; only counts and recent check/report times are shared.
+The community update also applies `Database/community_features.sql`, adding private profiles, saved places, current code checks and an authenticated aggregate-summary RPC. It has already been applied to the connected project. The worldwide/profile-photo update additionally applies `Database/worldwide_profiles.sql`; it is also already applied there. Raw voter identities stay private; only counts and recent check/report times are shared.
 
 For your own empty Supabase project:
 
-1. Apply `Database/schema.sql`, then `Database/account_requests.sql`, then `Database/community_features.sql`.
+1. Apply `Database/schema.sql`, then `Database/account_requests.sql`, then `Database/community_features.sql`, then `Database/worldwide_profiles.sql`.
 2. Put its URL and publishable key in `Config.xcconfig`.
 3. Configure authentication/email confirmation and production SMTP.
 4. Review the RLS/storage policies and operational settings.
 
 Places are authenticated community records. Anonymous clients cannot read codes. Inserts require the contributor's own account ID. Photos are public assets; uploads and cleanup are restricted to the owner's folder. Private reports and account requests are readable only by their submitter and administrators.
 
-The app loads places in one request, subject to the backend's default row limit. Server-side geographic queries and pagination are needed before larger-scale expansion.
+Discovery now uses an authenticated geographic query for the selected area, with a configurable 5–50 km radius and up to 200 nearest results. Search centers sent to the backend are rounded to 0.001 degrees; exact business coordinates remain part of shared listings. A latitude/longitude index narrows candidate rows, and a clamped haversine distance handles international coordinates and the date line. With very large datasets, a PostGIS index/pagination would be the next scaling step. Personal contributions and saved-place records are loaded independently of the selected city (up to 200 place records per group).
 
 ## Legal and ownership
 
@@ -122,3 +122,12 @@ Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev
 ### Community update verification
 
 The three UI tests passed with zero failures. The backend also passed rolled-back tests for profile editing/upsert and ownership protection, private saved/profile/vote records, changed votes remaining a single record, correct two-user aggregate counts, server-only check timestamps, and anonymous summary denial. No temporary test accounts/votes were retained. Live nearest-business accuracy, authenticated profile screens, cross-device layouts and full signup/photo flows remain manual device acceptance checks.
+
+## Worldwide browsing and profile photos
+
+- The map renders behind the glass navigation and bottom safe area; non-map pages keep a reserved footer. Map attribution receives clearance for the measured footer height.
+- Use the globe to search any city/district/address, pan and tap Search this area, or recenter Near me. The picker applies no country filter. Provider map/search coverage still varies, and shared codes only exist where people contribute them.
+- Choose a radius and sort Nearby by distance, newest or most confirmed. Saved places remain accessible across cities; sharing and copying addresses use system controls.
+- Profile now supports a custom display name/bio plus a selected photo, center-cropped preview, replacement and removal. Files are private and immutable, with owner-only policies and temporary signed display URLs. Upload failure rolls back the new photo; old-file cleanup is best effort and must also be handled in account deletion.
+- Profile edits can be previewed in demo mode; those changes/photos stay in the current session and are not uploaded.
+- The privacy notice explains approximate search-center requests and private profile-photo processing.
