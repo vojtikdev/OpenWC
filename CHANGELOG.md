@@ -24,3 +24,6 @@ Legal pages remain development drafts pending a public contact, finalized operat
 - Editable private profiles; saved places; personal contribution overview and check chart; useful nearby filters.
 - Working/broken community checks, recheck prompts, 30-day counts and server-controlled vote timestamps.
 - Added owner-only profiles/favorites/check records and authenticated anonymous-voter aggregate summaries; verified ownership, isolation, repeat-vote behavior and timestamp protections in a rolled-back database test.
+
+- Verified the updated app builds on Xcode 26.6 and all three iPhone simulator UI tests pass (Settings footer clearance, search with keyboard, exact pin selection).
+- Verified profile upserts/ownership and community vote privacy/count/timestamp protections in rolled-back backend tests; no synthetic votes or test accounts retained.

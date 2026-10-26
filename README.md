@@ -77,11 +77,11 @@ python3 scripts/check_project.py
 
 This checks deterministic project generation, all Swift/resource references, legal-resource inclusion, plist/scheme/asset formats, architecture settings and the pinned SDK. It **does not compile Swift**.
 
-The GitHub Actions workflow in `.github/workflows/ios-build.yml` built the published source successfully on Xcode 26.6 for an arm64 iPhone simulator. [Verified build](https://github.com/vojtikdev/OpenWC/actions/runs/40297040682). The exact `Package.resolved` produced by that build is committed to lock transitive dependencies. This verifies compilation, not on-device behavior.
+The GitHub Actions workflow in `.github/workflows/ios-build.yml` compiles the app and runs three iPhone simulator UI tests. The latest feature update passed on Xcode 26.6: [verified build and UI tests](https://github.com/vojtikdev/OpenWC/actions/runs/40300631933). The tests cover Settings actions staying above the footer (including the pushed privacy page), Nearby search with a keyboard, and exact-pin selection without a business-search result. The exact `Package.resolved` produced by that build is committed to lock transitive dependencies. This verifies compilation and the specified simulator interactions, not every device, provider result or authenticated flow.
 
 Backend checks performed in rolled-back transactions: own request insertion/read, ownership-spoof rejection, rejection of client-supplied request status, cross-user request isolation, and anonymous denial. No temporary test accounts or requests are retained. Existing place data is preserved. The security advisor currently reports leaked-password protection disabled; review the setting before launch.
 
-**Remaining checks:** iOS rendering, keyboard behavior, pin positioning on device, email delivery, and signup/photo upload end to end. The remote CI build passed; this editing environment itself has no Xcode or iOS Simulator. The build emitted a forward-compatibility warning about the location delegate under Swift 6 language mode; the project currently builds in Swift 5 mode.
+**Remaining checks:** iOS rendering, keyboard behavior, pin positioning on device, email delivery, and signup/photo upload end to end. The remote CI build passed; this editing environment itself has no Xcode or iOS Simulator. The location delegate uses an explicit preconcurrency conformance; the project currently builds in Swift 5 language mode.
 
 ### Manual acceptance checks
 
@@ -118,3 +118,7 @@ Email: [vojtechklep@gmail.com](mailto:vojtechklep@gmail.com). GitHub: [vojtikdev
 - Save places for later and filter Nearby by Saved, Step-free or Needs recheck.
 - A reported code prompts other visitors on its detail page to confirm working/broken status. One current vote per account/place, server timestamps, and 30-day aggregates prevent repeated votes from inflating counts. Two recent working votes with a working majority clear the recheck flag; conflicting/negative votes remain visible in the counts. Votes are community assertions, not proof that someone visited a venue.
 - Profile, favorites and raw vote RLS are owner-only. The summary function has a narrow authenticated interface in a private schema, a fixed search path, no dynamic SQL and a 1000-place request bound. Clients cannot assign check timestamps or alter another member’s profile/vote.
+
+### Community update verification
+
+The three UI tests passed with zero failures. The backend also passed rolled-back tests for profile editing/upsert and ownership protection, private saved/profile/vote records, changed votes remaining a single record, correct two-user aggregate counts, server-only check timestamps, and anonymous summary denial. No temporary test accounts/votes were retained. Live nearest-business accuracy, authenticated profile screens, cross-device layouts and full signup/photo flows remain manual device acceptance checks.
