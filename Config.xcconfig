@@ -1,0 +1,3 @@
+// Public client configuration. RLS protects database access.
+SUPABASE_URL = https:/$()/vpqezabichkjiwllczsg.supabase.co
+SUPABASE_KEY = sb_publishable_mPTmeoSerXVz7PP7Bu1qIw_B1jm4HrA
