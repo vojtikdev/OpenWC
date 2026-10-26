@@ -9,7 +9,8 @@ struct MapPinPicker: View {
     @State private var settled: CLLocationCoordinate2D
     @State private var moving = false
     let onConfirm: (CLLocationCoordinate2D, MKMapItem?) -> Void
-    private var centerID: String { String(format: "%.5f,%.5f", settled.latitude, settled.longitude) }
+    @State private var searchRevision = 0
+    @State private var waitingForSearch = true
 
     init(initialCoordinate: CLLocationCoordinate2D?, onConfirm: @escaping (CLLocationCoordinate2D, MKMapItem?) -> Void) {
         let initial = initialCoordinate ?? CLLocationCoordinate2D(latitude: 50.082, longitude: 14.424)
@@ -42,6 +43,8 @@ struct MapPinPicker: View {
                     finder.results = []
                     finder.error = nil
                     moving = false
+                    waitingForSearch = true
+                    searchRevision += 1
                 }
                 .overlay {
                     Image(systemName: "mappin").font(.system(size: 46, weight: .semibold)).foregroundStyle(violet)
@@ -49,7 +52,7 @@ struct MapPinPicker: View {
                         .offset(y: -23).allowsHitTesting(false)
                 }
                 VStack(alignment: .leading, spacing: 12) {
-                    if finder.searching || moving {
+                    if finder.searching || moving || waitingForSearch {
                         HStack { ProgressView(); Text("Finding the nearest business…").font(.subheadline) }
                     } else if let item = finder.results.first {
                         HStack {
@@ -73,9 +76,10 @@ struct MapPinPicker: View {
             }
             .navigationTitle("Find the entrance").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
-            .task(id: centerID) {
+            .task(id: searchRevision) {
                 do { try await Task.sleep(for: .milliseconds(550)); try Task.checkCancellation() }
                 catch { return }
+                waitingForSearch = false
                 await finder.nearest(to: settled)
             }
             .onDisappear { finder.cancel() }

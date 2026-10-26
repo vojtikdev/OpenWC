@@ -103,7 +103,7 @@ struct HomeView: View {
           navigation
         }
         .background(Color(uiColor: .systemBackground))
-        .alert("OpenWC", isPresented: Binding(get: { store.message != nil && selected == nil && !adding }, set: { if !$0 { store.message = nil } })) {
+        .alert("OpenWC", isPresented: Binding(get: { store.message != nil && selected == nil && !adding && tab != 3 }, set: { if !$0 { store.message = nil } })) {
             Button("OK") { store.message = nil }
         } message: { Text(store.message ?? "") }
         .sheet(isPresented: $adding) { AddPlaceView(regionCenter: origin?.coordinate) }

@@ -47,7 +47,7 @@ struct CommunityStatusView: View {
         feedback = nil
         do {
             if works { try await store.castCheck(place, works: true); feedback = "Thanks — your working-code check is saved." }
-            else { await store.report(place) }
+            else { await store.report(place); return }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         } catch { feedback = error.localizedDescription }
     }
@@ -101,6 +101,9 @@ struct ProfilePage: View {
             .safeAreaPadding(.bottom, 20)
             .navigationTitle("Your corner.")
             .refreshable { await store.load() }
+            .alert("OpenWC", isPresented: Binding(get: { store.message != nil && selected == nil }, set: { if !$0 { store.message = nil } })) {
+                Button("OK") { store.message = nil }
+            } message: { Text(store.message ?? "") }
             .sheet(isPresented: $editing) {
                 if let id = store.user?.id { EditProfileView(profile: store.profile ?? .empty(userID: id)) }
             }
