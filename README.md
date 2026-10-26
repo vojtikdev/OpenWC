@@ -75,11 +75,11 @@ python3 scripts/check_project.py
 
 This checks deterministic project generation, all Swift/resource references, legal-resource inclusion, plist/scheme/asset formats, architecture settings and the pinned SDK. It **does not compile Swift**.
 
-A GitHub Actions workflow in `.github/workflows/ios-build.yml` is prepared to build on macOS against an available iPhone simulator. After publication, inspect its result. Commit the first successfully resolved `Package.resolved` from Xcode to lock transitive dependencies; no lockfile is fabricated here.
+The GitHub Actions workflow in `.github/workflows/ios-build.yml` built the published source successfully on Xcode 26.6 for an arm64 iPhone simulator. [Verified build](https://github.com/vojtikdev/OpenWC/actions/runs/40297040682). The exact `Package.resolved` produced by that build is committed to lock transitive dependencies. This verifies compilation, not on-device behavior.
 
 Backend checks performed in rolled-back transactions: own request insertion/read, ownership-spoof rejection, rejection of client-supplied request status, cross-user request isolation, and anonymous denial. No temporary test accounts or requests are retained. Existing place data is preserved. The security advisor currently reports leaked-password protection disabled; review the setting before launch.
 
-**Not verified here:** Swift compilation, package resolution, iOS rendering, keyboard behavior, pin positioning on device, email delivery, or signup/photo upload end to end. This environment has no Xcode or iOS Simulator.
+**Remaining checks:** iOS rendering, keyboard behavior, pin positioning on device, email delivery, and signup/photo upload end to end. The remote CI build passed; this editing environment itself has no Xcode or iOS Simulator. The build emitted a forward-compatibility warning about the location delegate under Swift 6 language mode; the project currently builds in Swift 5 mode.
 
 ### Manual acceptance checks
 

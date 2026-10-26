@@ -11,6 +11,7 @@
 - Added a private, manually processed data/account-request queue with ownership policies and status isolation.
 - Updated the storage upload call, pinned Supabase Swift 2.55.4, preserved the Debug active-architecture correction, and added a macOS build workflow.
 
-Legal pages remain development drafts pending a public contact, finalized operational policies and review. The workflow is prepared but has not run until the repository is published. Native compilation/device testing remain unverified in this Linux environment.
+Legal pages remain development drafts pending a public contact, finalized operational policies and review. The first published GitHub Actions simulator build passed on Xcode 26.6. Device and visual testing remain outstanding.
 
 - Added the operator’s supplied public email, GitHub and Discord contact details to legal documents and in-app requests.
+- Published the source and commit history, verified the first macOS simulator build, and retained its resolved dependency lockfile.
