@@ -57,7 +57,7 @@ final class AppStore: ObservableObject {
         var path: String?
         if let photo {
             let value = "\(user.id.uuidString.lowercased())/\(id.uuidString.lowercased()).jpg"
-            try await client.storage.from("place-photos").upload(path: value, file: photo, options: FileOptions(contentType: "image/jpeg", upsert: false))
+            try await client.storage.from("place-photos").upload(value, data: photo, options: FileOptions(contentType: "image/jpeg", upsert: false))
             path = value
         }
         let place = Place(id: id, user_id: user.id, name: name, address: address, latitude: coordinate.latitude, longitude: coordinate.longitude, code: code, notes: notes, accessible: accessible, photo_path: path)
@@ -65,7 +65,7 @@ final class AppStore: ObservableObject {
             try await client.from("places").insert(place).execute()
             await load()
         } catch {
-            if let path { try? await client.storage.from("place-photos").remove(paths: [path]) }
+            if let path { _ = try? await client.storage.from("place-photos").remove(paths: [path]) }
             throw error
         }
     }

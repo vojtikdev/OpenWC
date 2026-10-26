@@ -252,7 +252,7 @@ struct SettingsView: View {
                     Picker("Appearance", selection: $appearance) { Text("Dark purple").tag("dark"); Text("Light").tag("light"); Text("System").tag("system") }
                 }
                 Section("Location") {
-                    Text("Your location stays on your device and is used to center the map and calculate distances.")
+                    Text("OpenWC uses your location on device to center the map and calculate distances. Apple Maps may receive map or search-region information. You can also select places manually without location access.")
                     Button("Open iOS settings") { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
                 }
                 Section("The OpenWC spirit") {

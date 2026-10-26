@@ -1,0 +1,48 @@
+name: iOS build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Validate project packaging
+        run: python3 scripts/check_project.py
+      - name: Select an available iPhone simulator
+        id: simulator
+        shell: bash
+        run: |
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          python3 - "$RUNNER_TEMP/devices.json" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          for runtime, devices in data['devices'].items():
+              if '.iOS-' not in runtime:
+                  continue
+              for device in devices:
+                  if device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      print('id=' + device['udid'])
+                      sys.exit(0)
+          raise SystemExit('No iPhone simulator installed on this runner')
+          PY
+      - name: Build for iPhone Simulator
+        run: >-
+          xcodebuild -project OpenWC.xcodeproj -scheme OpenWC
+          -configuration Debug
+          -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}'
+          -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Retain resolved dependency versions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-swift-packages
+          path: OpenWC.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          if-no-files-found: ignore

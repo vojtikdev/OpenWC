@@ -21,8 +21,13 @@ sourcegroup=add('sourcegroup',{'isa':'PBXGroup','children':files+[plist,assets],
 productgroup=add('productgroup',{'isa':'PBXGroup','children':[product],'name':'Products','sourceTree':'<group>'})
 main=add('main',{'isa':'PBXGroup','children':[sourcegroup,config,productgroup],'sourceTree':'<group>'})
 sourcephase=add('sourcephase',{'isa':'PBXSourcesBuildPhase','buildActionMask':'2147483647','files':sources,'runOnlyForDeploymentPostprocessing':'0'})
-resourcephase=add('resourcephase',{'isa':'PBXResourcesBuildPhase','buildActionMask':'2147483647','files':[assetbuild],'runOnlyForDeploymentPostprocessing':'0'})
-package=add('package',{'isa':'XCRemoteSwiftPackageReference','repositoryURL':'https://github.com/supabase/supabase-swift.git','requirement':{'kind':'upToNextMajorVersion','minimumVersion':'2.0.0'}})
+legalbuilds=[]
+for document in sorted((root/'Legal').glob('*.md')):
+    reference=add('legal:'+document.name, {'isa':'PBXFileReference','lastKnownFileType':'net.daringfireball.markdown','path':'Legal/'+document.name,'sourceTree':'<group>'})
+    objects[main]['children'].append(reference)
+    legalbuilds.append(add('legalbuild:'+document.name, {'isa':'PBXBuildFile','fileRef':reference}))
+resourcephase=add('resourcephase',{'isa':'PBXResourcesBuildPhase','buildActionMask':'2147483647','files':[assetbuild]+legalbuilds,'runOnlyForDeploymentPostprocessing':'0'})
+package=add('package',{'isa':'XCRemoteSwiftPackageReference','repositoryURL':'https://github.com/supabase/supabase-swift.git','requirement':{'kind':'exactVersion','version':'2.55.4'}})
 dep=add('supabase',{'isa':'XCSwiftPackageProductDependency','package':package,'productName':'Supabase'})
 depbuild=add('supabasebuild',{'isa':'PBXBuildFile','productRef':dep})
 frameworkphase=add('frameworkphase',{'isa':'PBXFrameworksBuildPhase','buildActionMask':'2147483647','files':[depbuild],'runOnlyForDeploymentPostprocessing':'0'})

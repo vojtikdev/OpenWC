@@ -1,0 +1,13 @@
+.DS_Store
+build/
+DerivedData/
+.swiftpm/
+**/xcuserdata/
+*.xcuserstate
+*.ipa
+*.dSYM/
+.env
+.env.*
+Config.local.xcconfig
+__pycache__/
+*.pyc

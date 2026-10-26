@@ -25,6 +25,36 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "09D0AE97EB146CB4AF71E000";
 		};
+		"48931172D278D9DD6B02D9A9" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "AuthView.swift";
+			"sourceTree" = "<group>";
+		};
+		"FE279774B3723274EFBB1ED8" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "48931172D278D9DD6B02D9A9";
+		};
+		"4DABC0241ACE313E885A285A" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "LegalViews.swift";
+			"sourceTree" = "<group>";
+		};
+		"6C697E0FDC211C43377E456C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4DABC0241ACE313E885A285A";
+		};
+		"9C2ABB9B5593BDED8CF98AB9" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "MapPinPicker.swift";
+			"sourceTree" = "<group>";
+		};
+		"A777730B9DB066216753028C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9C2ABB9B5593BDED8CF98AB9";
+		};
 		"78FD430803560F137BDECEE8" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -89,6 +119,9 @@
 			"children" = (
 				"15ECBB4F3B4DBC8842DCBF4C",
 				"09D0AE97EB146CB4AF71E000",
+				"48931172D278D9DD6B02D9A9",
+				"4DABC0241ACE313E885A285A",
+				"9C2ABB9B5593BDED8CF98AB9",
 				"78FD430803560F137BDECEE8",
 				"9913CB09BD788EEECFF2B7F9",
 				"E2D6FC4FDC5C0755ABEA581A",
@@ -112,6 +145,9 @@
 				"482182478A3ECD4745BEA917",
 				"DFBA7AADE0868074C2861C98",
 				"1EE63A94BAD0DF0FCB0E7B8C",
+				"5ABE8D67EB227C46BABFEC29",
+				"7738B235D4D13E8A54AC1CB0",
+				"F96E78A0D8C697D627DCF8B7",
 			);
 			"sourceTree" = "<group>";
 		};
@@ -121,17 +157,53 @@
 			"files" = (
 				"38F7A3B30750C0722B8017DB",
 				"62D168663CE0664E79905E49",
+				"FE279774B3723274EFBB1ED8",
+				"6C697E0FDC211C43377E456C",
+				"A777730B9DB066216753028C",
 				"C28E3B592A560C32484F497E",
 				"CC7357DF2EF8481E791EE688",
 				"B5D3071441A17FAEE9299538",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
+		"5ABE8D67EB227C46BABFEC29" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "net.daringfireball.markdown";
+			"path" = "Legal/COPYRIGHT.md";
+			"sourceTree" = "<group>";
+		};
+		"046FA26246A06A6501510394" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "5ABE8D67EB227C46BABFEC29";
+		};
+		"7738B235D4D13E8A54AC1CB0" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "net.daringfireball.markdown";
+			"path" = "Legal/PRIVACY_POLICY.md";
+			"sourceTree" = "<group>";
+		};
+		"933E943450477F71BE38C14F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "7738B235D4D13E8A54AC1CB0";
+		};
+		"F96E78A0D8C697D627DCF8B7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "net.daringfireball.markdown";
+			"path" = "Legal/TERMS_OF_SERVICE.md";
+			"sourceTree" = "<group>";
+		};
+		"BDCFBDF57620B955FEEB6FB2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "F96E78A0D8C697D627DCF8B7";
+		};
 		"ECE2D868E17AEF81A05610A3" = {
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"CF8A4D27E1C506A7C75A76BE",
+				"046FA26246A06A6501510394",
+				"933E943450477F71BE38C14F",
+				"BDCFBDF57620B955FEEB6FB2",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -139,8 +211,8 @@
 			"isa" = "XCRemoteSwiftPackageReference";
 			"repositoryURL" = "https://github.com/supabase/supabase-swift.git";
 			"requirement" = {
-				"kind" = "upToNextMajorVersion";
-				"minimumVersion" = "2.0.0";
+				"kind" = "exactVersion";
+				"version" = "2.55.4";
 			};
 		};
 		"5B2FB32768E94DF2B310CA2C" = {

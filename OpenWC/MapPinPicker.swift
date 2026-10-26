@@ -5,7 +5,6 @@ struct MapPinPicker: View {
     @Environment(\.dismiss) private var dismiss
     @State private var position: MapCameraPosition
     @State private var center: CLLocationCoordinate2D
-    @State private var moving = false
     let onConfirm: (CLLocationCoordinate2D) -> Void
 
     init(initialCoordinate: CLLocationCoordinate2D?, onConfirm: @escaping (CLLocationCoordinate2D) -> Void) {
@@ -22,11 +21,6 @@ struct MapPinPicker: View {
             .mapStyle(.standard(elevation: .flat))
             .onMapCameraChange(frequency: .continuous) { context in
                 center = context.region.center
-                moving = true
-            }
-            .onMapCameraChange(frequency: .onEnd) { context in
-                center = context.region.center
-                moving = false
             }
             .overlay {
                 // The tip is exactly at the viewport center used by MapCameraUpdateContext.
@@ -50,7 +44,7 @@ struct MapPinPicker: View {
                     } label: {
                         Label("Use this location", systemImage: "checkmark")
                             .fontWeight(.semibold).frame(maxWidth: .infinity).padding(15)
-                    }.buttonStyle(.borderedProminent).disabled(moving)
+                    }.buttonStyle(.borderedProminent)
                 }.padding(20).background(.regularMaterial)
             }
             .navigationTitle("Pin the entrance")
