@@ -123,6 +123,11 @@ struct PrivacyRequestView: View {
             details = ""
             feedback = "Request saved. It is pending manual review by the operator. Your account has not been deleted."
             await refresh()
-        } catch { feedback = error.localizedDescription }
+        } catch {
+            if let databaseError = error as? PostgrestError, databaseError.code == "23505" {
+                feedback = "You already have a pending request of this type. It appears in your request history."
+                await refresh()
+            } else { feedback = error.localizedDescription }
+        }
     }
 }
