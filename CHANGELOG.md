@@ -36,3 +36,6 @@ Legal pages remain development drafts pending a public contact, finalized operat
 - Added share-place/address-copy actions and improved distance labels.
 - Added geographic queries with date-line-safe distances and updated privacy text for approximate server-side area searches.
 - Added UI checks for full-height map rendering, city-search access and custom profile names/photo entry.
+
+- Verified five UI tests on Xcode 26.6 with no failures, including the full-height map and custom demo profile name; reviewed map, profile and Settings screenshots.
+- Verified worldwide/date-line geographic queries and private avatar ownership/removal constraints in rolled-back database checks.

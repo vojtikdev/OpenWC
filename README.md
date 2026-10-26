@@ -6,12 +6,15 @@ A native SwiftUI iPhone app by **Vojtěch Klepáček** for community-shared toil
 
 ## Features
 
-- Apple Maps business pins, optional location centering, and nearby places sorted by distance within 5 km.
+- Full-height Apple Maps with clustered business pins, optional location centering, worldwide city/address search and “Search this area.”
+- Adjustable 5–50 km discovery radius, nearest/newest/most-confirmed sorting, and saved places across cities.
 - A permanently visible nearby search field and navigation that reserves its own space.
 - Email registration/login, session restoration, password visibility, confirmation and terms acknowledgement.
 - A prominent + action to share a place, toilet code, access notes, step-free information and an optional photo.
 - Business search **or manual map placement**: move the map beneath the pin, confirm the location, and enter the place name.
-- Code copying, walking directions, contribution history and broken-code reports.
+- Custom display names, bios and private profile photo uploads with replacement/removal.
+- Code/address copying, place sharing, walking directions, contribution history and personal statistics.
+- Working/broken code votes with community confirmation counts and recheck prompts.
 - In-app terms, privacy policy, copyright notices and private account/data request tracking.
 - Separate, clearly labelled fictional demo that cannot publish.
 
@@ -31,7 +34,7 @@ Debug explicitly uses `ONLY_ACTIVE_ARCH=YES`; Release uses `NO`. If an old copy 
 
 This working copy contains the existing OpenWC project's URL and public publishable key in `Config.xcconfig`. Publishable keys are designed for clients; row-level security controls database access. Never add a secret/service-role key to the app or repository.
 
-The connected project is `vpqezabichkjiwllczsg`, in EU Frankfurt. **Both SQL files have already been applied there. Do not rerun them against that project.** Existing contributions are preserved.
+The connected project is `vpqezabichkjiwllczsg`, in EU Frankfurt. **All four SQL files listed below have already been applied there. Do not rerun them against that project.** Existing contributions are preserved.
 
 The community update also applies `Database/community_features.sql`, adding private profiles, saved places, current code checks and an authenticated aggregate-summary RPC. It has already been applied to the connected project. The worldwide/profile-photo update additionally applies `Database/worldwide_profiles.sql`; it is also already applied there. Raw voter identities stay private; only counts and recent check/report times are shared.
 
@@ -65,7 +68,7 @@ Before public app launch:
 
 Settings → Privacy & account requests inserts a private request into `public.account_requests`. This is a **manual queue**, not automatic account deletion. The operator must actively monitor it in Supabase, verify the request, fulfill applicable rights and time limits, and communicate the outcome. The app shows pending/processing/completed status. Ordinary members cannot set status or read other users' requests.
 
-For deletion, revoke sessions; remove all related photos using their storage paths; delete account-associated contributions, reports and request records; then delete the Auth account using secure administrative tools. Database cascades do not delete Storage files. Handle token expiry, backups and any required lawful retention deliberately. Never embed administrative credentials in the iOS client. Record any required operational audit outside the app's public tables and notify the user through a verified private channel.
+For deletion, revoke sessions; remove all related place photos and private profile photos using their storage paths; delete account-associated contributions, reports and request records; then delete the Auth account using secure administrative tools. Database cascades do not delete Storage files. Handle token expiry, backups and any required lawful retention deliberately. Never embed administrative credentials in the iOS client. Record any required operational audit outside the app's public tables and notify the user through a verified private channel.
 
 ## Verification
 
@@ -77,11 +80,11 @@ python3 scripts/check_project.py
 
 This checks deterministic project generation, all Swift/resource references, legal-resource inclusion, plist/scheme/asset formats, architecture settings and the pinned SDK. It **does not compile Swift**.
 
-The GitHub Actions workflow in `.github/workflows/ios-build.yml` compiles the app and runs three iPhone simulator UI tests. The latest feature update passed on Xcode 26.6: [verified build and UI tests](https://github.com/vojtikdev/OpenWC/actions/runs/40300631933). The tests cover Settings actions staying above the footer (including the pushed privacy page), Nearby search with a keyboard, and exact-pin selection without a business-search result. The exact `Package.resolved` produced by that build is committed to lock transitive dependencies. This verifies compilation and the specified simulator interactions, not every device, provider result or authenticated flow.
+The GitHub Actions workflow in `.github/workflows/ios-build.yml` compiles the app and runs five iPhone simulator UI tests. The worldwide/profile update passed on Xcode 26.6: [verified build and UI tests](https://github.com/vojtikdev/OpenWC/actions/runs/40308284653). The tests cover full-height map rendering and city-search access, saving a custom demo profile name and finding the photo entry point, Settings actions staying above the footer (including the pushed privacy page), Nearby search with a keyboard, and exact-pin selection without a business-search result. Screenshot attachments are retained for review. The exact `Package.resolved` produced by that build is committed to lock transitive dependencies. This verifies compilation and the specified simulator interactions, not every device, provider result or authenticated flow.
 
-Backend checks performed in rolled-back transactions: own request insertion/read, ownership-spoof rejection, rejection of client-supplied request status, cross-user request isolation, and anonymous denial. No temporary test accounts or requests are retained. Existing place data is preserved. The security advisor currently reports leaked-password protection disabled; review the setting before launch.
+Backend checks performed in rolled-back transactions: own request insertion/read, ownership-spoof rejection, rejection of client-supplied request status, cross-user request isolation, and anonymous denial. No temporary test accounts or requests are retained. Existing place data is preserved. Additional rolled-back checks verified Tokyo/Sydney geographic results and date-line distances, owner-folder avatar references, null photo removal and a private avatar bucket. These checks do not substitute for a real authenticated photo upload. The latest security advisor returned no findings.
 
-**Remaining checks:** iOS rendering, keyboard behavior, pin positioning on device, email delivery, and signup/photo upload end to end. The remote CI build passed; this editing environment itself has no Xcode or iOS Simulator. The location delegate uses an explicit preconcurrency conformance; the project currently builds in Swift 5 language mode.
+**Remaining checks:** physical-device rendering and pin positioning, large text/VoiceOver, email delivery, and signup/profile-photo upload end to end. The five simulator scenarios above and their screenshots were reviewed; they do not cover every state. The remote CI build passed; this editing environment itself has no Xcode or iOS Simulator. The location delegate uses an explicit preconcurrency conformance; the project currently builds in Swift 5 language mode.
 
 ### Manual acceptance checks
 
